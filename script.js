@@ -131,7 +131,12 @@ import * as THREE from 'three';
         function parseModelList() {
             // IMPORTANT: The modelNamesText variable is defined and used *only* within this function.
             // It is NOT rendered to the HTML.
-            const modelNamesText = `1. Mirefin (Base Model)
+            // The modelNamesText implicitly defines origins by grouping.
+            // For example, models 1-9 are for "Abyssal Marsh", 10-18 for "Scorching Basin", etc.
+            // This structure is crucial for environment-specific hatching.
+
+            const modelGroups = [
+                { origin: "Abyssal Marsh", models: `1. Mirefin (Base Model)
 2. Ancient Mirefin (EV1 Model)
 3. Legendary Mirefin (EV2 Model)
 4. Rootfang (Base Model)
@@ -139,8 +144,8 @@ import * as THREE from 'three';
 6. Legendary Rootfang (EV2 Model)
 7. Gloomleech (Base Model)
 8. Ancient Gloomleech (EV1 Model)
-9. Legendary Gloomleech (EV2 Model)
-10. Pyreclaw (Base Model)
+9. Legendary Gloomleech (EV2 Model)` },
+                { origin: "Scorching Basin", models: `10. Pyreclaw (Base Model)
 11. Volcanic Pyreclaw (EV1 Model)
 12. Solarflare Pyreclaw (EV2 Model)
 13. Solhound (Base Model)
@@ -148,8 +153,8 @@ import * as THREE from 'three';
 15. Solarflare Solhound (EV2 Model)
 16. Ashwing (Base Model)
 17. Volcanic Ashwing (EV1 Model)
-18. Solarflare Ashwing (EV2 Model)
-19. Aerowing (Base Model)
+18. Solarflare Ashwing (EV2 Model)` },
+                { origin: "Cloudspine Plateau", models: `19. Aerowing (Base Model)
 20. Skycrest Aerowing (EV1 Model)
 21. Summitlord Aerowing (EV2 Model)
 22. Cragbeak (Base Model)
@@ -157,8 +162,8 @@ import * as THREE from 'three';
 24. Summitlord Cragbeak (EV2 Model)
 25. Zephyrion (Base Model)
 26. Skycrest Zephyrion (EV1 Model)
-27. Summitlord Zephyrion (EV2 Model)
-28. Bloomtail (Base Model)
+27. Summitlord Zephyrion (EV2 Model)` },
+                { origin: "Verdant Lowlands", models: `28. Bloomtail (Base Model)
 29. Primal Bloomtail (EV1 Model)
 30. Elderwood Bloomtail (EV2 Model)
 31. Riveraptor (Base Model)
@@ -166,8 +171,8 @@ import * as THREE from 'three';
 33. Elderwood Riveraptor (EV2 Model)
 34. Vinetooth (Base Model)
 35. Primal Vinetooth (EV1 Model)
-36. Elderwood Vinetooth (EV2 Model)
-37. Glaciore (Base Model)
+36. Elderwood Vinetooth (EV2 Model)` },
+                { origin: "Frozen Stratoscape", models: `37. Glaciore (Base Model)
 38. Crystalline Glaciore (EV1 Model)
 39. Xenoform Glaciore (EV2 Model)
 40. Rimescale (Base Model)
@@ -175,8 +180,8 @@ import * as THREE from 'three';
 42. Xenoform Rimescale (EV2 Model)
 43. Cometail (Base Model)
 44. Crystalline Cometail (EV1 Model)
-45. Xenoform Cometail (EV2 Model)
-46. Basaltmane (Base Model)
+45. Xenoform Cometail (EV2 Model)` },
+                { origin: "Obsidian Wastes", models: `46. Basaltmane (Base Model)
 47. Tempered Basaltmane (EV1 Model)
 48. Dreadwaste Basaltmane (EV2 Model)
 49. Ashstrider (Base Model)
@@ -184,8 +189,8 @@ import * as THREE from 'three';
 51. Dreadwaste Ashstrider (EV2 Model)
 52. Flintfang (Base Model)
 53. Tempered Flintfang (EV1 Model)
-54. Dreadwaste Flintfang (EV2 Model)
-55. Luminwing (Base Model)
+54. Dreadwaste Flintfang (EV2 Model)` },
+                { origin: "Twilight Fenlands", models: `55. Luminwing (Base Model)
 56. Luminous Luminwing (EV1 Model)
 57. Enigmatic Luminwing (EV2 Model)
 58. Reedskipper (Base Model)
@@ -193,8 +198,8 @@ import * as THREE from 'three';
 60. Enigmatic Reedskipper (EV2 Model)
 61. Vesperwisp (Base Model)
 62. Luminous Vesperwisp (EV1 Model)
-63. Enigmatic Vesperwisp (EV2 Model)
-64. Floracorn (Base Model)
+63. Enigmatic Vesperwisp (EV2 Model)` },
+                { origin: "Alpine Bloom", models: `64. Floracorn (Base Model)
 65. Wildbloom Floracorn (EV1 Model)
 66. Serenepeak Floracorn (EV2 Model)
 67. Gladehorn (Base Model)
@@ -202,8 +207,10 @@ import * as THREE from 'three';
 69. Serenepeak Gladehorn (EV2 Model)
 70. Sunpetal (Base Model)
 71. Wildbloom Sunpetal (EV1 Model)
-72. Serenepeak Sunpetal (EV2 Model)
-73. Mirefang
+72. Serenepeak Sunpetal (EV2 Model)` }
+            ];
+
+            const hybridModelsText = `73. Mirefang
 74. Mireleech
 75. Rootleech
 76. Pyrehound
@@ -318,140 +325,92 @@ import * as THREE from 'three';
 185. Vesperhorn
 186. Vesperpetal`;
 
-            const lines = modelNamesText.split('\n');
-            let currentOrigin = "";
-            let currentMonikers = { ev1: "", ev2: "" };
             ALL_MODEL_DEFINITIONS.length = 0; // Clear array before parsing
 
-            lines.forEach(line => {
-                line = line.trim();
-                if (!line) return;
+            modelGroups.forEach(group => {
+                const currentOrigin = group.origin;
+                const lines = group.models.split('\n');
 
-                if (line.endsWith("Origin:")) {
-                    currentOrigin = line.replace(" Origin:", "").trim();
-                    return;
-                }
-                if (line.startsWith("Monikers:")) {
-                    const monikerMatch = line.match(/Monikers:\s*([^(\s]+)\s*\(EV1\),\s*([^(\s]+)\s*\(EV2\)/i);
-                    if (monikerMatch) {
-                        currentMonikers = { ev1: monikerMatch[1], ev2: monikerMatch[2] };
-                    } else { // Fallback for "Monikers: Ancient (EV1), Legendary (EV2)Mirefin"
-                        const complexMonikerMatch = line.match(/Monikers:\s*([^(\s]+)\s*\(EV1\),\s*([^(\s]+)\s*\(EV2\)([A-Za-z]+)/i);
-                        if(complexMonikerMatch){
-                            currentMonikers = { ev1: complexMonikerMatch[1], ev2: complexMonikerMatch[2] };
-                            // The species name attached to moniker line will be handled when processing the actual species line
-                        }
-                    }
-                    return;
-                }
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
 
-                const itemMatch = line.match(/^(\d+)\.\s*(.+)/);
-                if (!itemMatch) return;
+                    const itemMatch = line.match(/^(\d+)\.\s*(.+)/);
+                    if (!itemMatch) return;
 
-                const id = parseInt(itemMatch[1]);
-                let fullName = itemMatch[2].trim();
-                let modelKey = "";
-                let expectedFilename = "";
-                let speciesName = "";
-                let evolutionStage = 0; 
-                let isPurebredLine = false;
-                let isSpecificHybrid = false;
-                let hybridType = null; 
+                    const id = parseInt(itemMatch[1]);
+                    let fullName = itemMatch[2].trim();
+                    let modelKey = "";
+                    let expectedFilename = "";
+                    let speciesName = "";
+                    let evolutionStage = 0;
+                    let isPurebredLine = true; // All models in these groups are purebred
+                    let isSpecificHybrid = false;
+                    let hybridType = null;
 
-                // Handle cases like "Legendary (EV2)Mirefin (EV2 Model)"
-                const monikerInFullNameMatch = fullName.match(/^([A-Za-z\s]+)\s*\(EV\d\)([A-Za-z]+)\s*\(EV\d Model\)/i);
-                if(monikerInFullNameMatch) {
-                    const monikerPart = monikerInFullNameMatch[1].trim();
-                    const speciesPart = monikerInFullNameMatch[2].trim();
-                    if(fullName.includes("(EV1 Model)")) {
-                        fullName = `${monikerPart} ${speciesPart} (EV1 Model)`;
-                    } else if (fullName.includes("(EV2 Model)")) {
-                        fullName = `${monikerPart} ${speciesPart} (EV2 Model)`;
-                    }
-                }
-
-
-                if (id <= 72) { 
-                    isPurebredLine = true;
                     const baseMatch = fullName.match(/^([^\(]+?)\s*\(Base Model\)/i);
-                    const ev1Match = fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV1 Model\)/i); // Moniker Species (EV1 Model)
-                    const ev2Match = fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV2 Model\)/i); // Moniker Species (EV2 Model)
-                    
+                    const ev1Match = fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV1 Model\)/i);
+                    const ev2Match = fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV2 Model\)/i);
+
                     if (baseMatch) {
                         speciesName = baseMatch[1].trim();
                         evolutionStage = 0;
                         modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_BASE`;
                         expectedFilename = `${speciesName}.glb`;
                     } else if (ev1Match) {
-                        // speciesName = ev1Match[1].trim(); // This was taking the moniker
-                        speciesName = ev1Match[2].trim(); // This should be the species part
+                        speciesName = ev1Match[2].trim();
                         let moniker = ev1Match[1].trim();
                         evolutionStage = 1;
                         modelKey = `${moniker.toUpperCase().replace(/\s+/g, '_')}_${speciesName.toUpperCase().replace(/\s+/g, '_')}_EV1`;
                         expectedFilename = `${moniker} ${speciesName}.glb`;
                     } else if (ev2Match) {
-                        // speciesName = ev2Match[1].trim(); // This was taking the moniker
-                        speciesName = ev2Match[2].trim(); // This should be the species part
+                        speciesName = ev2Match[2].trim();
                         let moniker = ev2Match[1].trim();
                         evolutionStage = 2;
                         modelKey = `${moniker.toUpperCase().replace(/\s+/g, '_')}_${speciesName.toUpperCase().replace(/\s+/g, '_')}_EV2`;
                         expectedFilename = `${moniker} ${speciesName}.glb`;
-                    } else { 
+                    } else {
                         console.warn(`Could not parse purebred line: ${fullName}`);
-                        // Attempt a more generic parse for purebreds if specific patterns fail
-                        if (fullName.includes("(Base Model)")) {
-                            speciesName = fullName.substring(0, fullName.indexOf(" (Base Model)")).trim();
-                            evolutionStage = 0;
-                            modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_BASE`;
-                            expectedFilename = `${speciesName}.glb`;
-                        } else if (fullName.includes("(EV1 Model)")) {
-                            evolutionStage = 1;
-                            // Try to extract species name before "(EV1 Model)"
-                            let tempName = fullName.substring(0, fullName.indexOf(" (EV1 Model)")).trim();
-                            // Assume the last word is the species, rest is moniker
-                            let parts = tempName.split(/\s+/);
-                            speciesName = parts.pop();
-                            let moniker = parts.join(" ");
-                            modelKey = `${moniker.toUpperCase().replace(/\s+/g, '_')}_${speciesName.toUpperCase().replace(/\s+/g, '_')}_EV1`;
-                            expectedFilename = `${moniker} ${speciesName}.glb`;
-                        } else if (fullName.includes("(EV2 Model)")) {
-                            evolutionStage = 2;
-                            let tempName = fullName.substring(0, fullName.indexOf(" (EV2 Model)")).trim();
-                            let parts = tempName.split(/\s+/);
-                            speciesName = parts.pop();
-                            let moniker = parts.join(" ");
-                            modelKey = `${moniker.toUpperCase().replace(/\s+/g, '_')}_${speciesName.toUpperCase().replace(/\s+/g, '_')}_EV2`;
-                            expectedFilename = `${moniker} ${speciesName}.glb`;
-                        } else {
-                             speciesName = fullName; // Fallback
-                             modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_UNKNOWN`;
-                             expectedFilename = `${speciesName}.glb`;
-                        }
+                        speciesName = fullName; // Fallback
+                        modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_UNKNOWN`;
+                        expectedFilename = `${speciesName}.glb`;
                     }
-                } else if (id <= 96) { 
-                    isSpecificHybrid = true;
-                    hybridType = 'intra';
-                    speciesName = fullName; 
-                    evolutionStage = 0; 
-                    modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_HYBRID_BASE`;
-                    expectedFilename = `${speciesName}.glb`;
-                } else { 
-                    isSpecificHybrid = true;
-                    hybridType = 'inter';
-                    speciesName = fullName;
-                    evolutionStage = 0;
-                    modelKey = `${speciesName.toUpperCase().replace(/\s+/g, '_')}_HYBRID_BASE`;
-                    expectedFilename = `${speciesName}.glb`;
-                }
-                modelKey = modelKey.replace(/[^A-Z0-9_]/gi, '').toUpperCase();
-                if (!expectedFilename.toLowerCase().endsWith('.glb')) {
-                     expectedFilename += ".glb";
-                }
+                    
+                    modelKey = modelKey.replace(/[^A-Z0-9_]/gi, '').toUpperCase();
+                    if (!expectedFilename.toLowerCase().endsWith('.glb')) {
+                         expectedFilename += ".glb";
+                    }
+
+                    ALL_MODEL_DEFINITIONS.push({
+                        id, fullName, modelKey, expectedFilename, speciesName, evolutionStage,
+                        originEnvironmentName: currentOrigin, // Assign the group's origin
+                        isPurebredLine, isSpecificHybrid, hybridType,
+                    });
+                });
+            });
+
+            // Parse hybrid models
+            const hybridLines = hybridModelsText.split('\n');
+            hybridLines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+
+                const itemMatch = line.match(/^(\d+)\.\s*(.+)/);
+                if (!itemMatch) return;
+                
+                const id = parseInt(itemMatch[1]);
+                const fullName = itemMatch[2].trim();
+                const modelKey = `${fullName.toUpperCase().replace(/\s+/g, '_')}_HYBRID_BASE`;
+                const expectedFilename = `${fullName}.glb`;
 
                 ALL_MODEL_DEFINITIONS.push({
-                    id, fullName, modelKey, expectedFilename, speciesName, evolutionStage,
-                    originEnvironmentName: (isPurebredLine || hybridType === 'intra') ? currentOrigin : null,
-                    isPurebredLine, isSpecificHybrid, hybridType,
+                    id, fullName, modelKey, expectedFilename, 
+                    speciesName: fullName, 
+                    evolutionStage: 0,
+                    originEnvironmentName: null, // Hybrids don't have a single origin in this context
+                    isPurebredLine: false, 
+                    isSpecificHybrid: true, 
+                    hybridType: (id <= 96) ? 'intra' : 'inter',
                 });
             });
         }
@@ -838,18 +797,49 @@ Description: Surprisingly lush slopes...`;
                 baseSpeciesModelKeyForPurebred = specificHybridResultKey ? null : parent1ForMating.baseSpeciesModelKey; // If generic hybrid, inherits P1's base purebred line for context
 
             } else { 
+                // --- MODIFIED PUREBRED HATCHING LOGIC ---
                 isNewCreaturePurebred = true;
-                const purebredBaseModels = ALL_MODEL_DEFINITIONS.filter(m => m.isPurebredLine && m.evolutionStage === 0);
-                if (purebredBaseModels.length > 0) {
-                    const randomBase = purebredBaseModels[Math.floor(Math.random() * purebredBaseModels.length)];
-                    offspringModelKey = randomBase.modelKey;
-                    baseSpeciesModelKeyForPurebred = randomBase.modelKey; 
+                if (!incubationEnvData) {
+                    console.error("Could not determine current incubation environment data for purebred hatching! Falling back to random.");
+                    const allPurebredBaseModels = ALL_MODEL_DEFINITIONS.filter(m => m.isPurebredLine && m.evolutionStage === 0);
+                    if (allPurebredBaseModels.length > 0) {
+                        const randomBase = allPurebredBaseModels[Math.floor(Math.random() * allPurebredBaseModels.length)];
+                        offspringModelKey = randomBase.modelKey;
+                        baseSpeciesModelKeyForPurebred = randomBase.modelKey;
+                    } else {
+                        console.error("No purebred base models defined!");
+                        const firstModelDef = ALL_MODEL_DEFINITIONS[0]; // Should not happen
+                        offspringModelKey = firstModelDef ? firstModelDef.modelKey : "MIREFIN_BASE"; 
+                        baseSpeciesModelKeyForPurebred = offspringModelKey;
+                    }
                 } else {
-                    console.error("No purebred base models defined!");
-                    const firstModelDef = ALL_MODEL_DEFINITIONS[0];
-                    offspringModelKey = firstModelDef ? firstModelDef.modelKey : "MIREFIN_BASE"; 
-                    baseSpeciesModelKeyForPurebred = offspringModelKey;
+                    const currentEnvironmentName = incubationEnvData.name; // e.g., "Abyssal Marsh"
+                    const environmentSpecificBaseModels = ALL_MODEL_DEFINITIONS.filter(m =>
+                        m.isPurebredLine &&
+                        m.evolutionStage === 0 &&
+                        m.originEnvironmentName === currentEnvironmentName
+                    );
+
+                    if (environmentSpecificBaseModels.length > 0) {
+                        const randomBase = environmentSpecificBaseModels[Math.floor(Math.random() * environmentSpecificBaseModels.length)];
+                        offspringModelKey = randomBase.modelKey;
+                        baseSpeciesModelKeyForPurebred = randomBase.modelKey; // This is the base species for evolution tracking
+                    } else {
+                        console.warn(`No purebred base models found for environment: ${currentEnvironmentName}. Falling back to random selection from all purebreds.`);
+                        const allPurebredBaseModels = ALL_MODEL_DEFINITIONS.filter(m => m.isPurebredLine && m.evolutionStage === 0);
+                        if (allPurebredBaseModels.length > 0) {
+                            const randomBase = allPurebredBaseModels[Math.floor(Math.random() * allPurebredBaseModels.length)];
+                            offspringModelKey = randomBase.modelKey;
+                            baseSpeciesModelKeyForPurebred = randomBase.modelKey;
+                        } else {
+                             console.error("No purebred base models defined at all!");
+                             const firstModelDef = ALL_MODEL_DEFINITIONS[0]; // Should not happen
+                             offspringModelKey = firstModelDef ? firstModelDef.modelKey : "MIREFIN_BASE"; 
+                             baseSpeciesModelKeyForPurebred = offspringModelKey;
+                        }
+                    }
                 }
+                // --- END OF MODIFIED PUREBRED HATCHING LOGIC ---
             }
             
             const creatureData = createCreatureObject({
@@ -858,8 +848,10 @@ Description: Surprisingly lush slopes...`;
                 color: hatchColor,
                 isPurebred: isNewCreaturePurebred,
                 isHybrid: isNewCreatureHybrid,
-                incubatedEnvKey: incubationEnvKey,
-                originEnvKey: isNewCreaturePurebred ? ALL_MODEL_DEFINITIONS.find(m=>m.modelKey === offspringModelKey)?.originEnvironmentName : (parent1ForMating?.originEnvironmentKey || incubationEnvKey), // Hybrid origin can be complex, default to P1 or hatch env
+                incubatedEnvKey: incubationEnvKey, // Environment where it was incubated
+                // For new purebreds, their origin IS the incubation environment.
+                // For hybrids, origin is more complex (e.g., based on parents or generic if no rule matches).
+                originEnvKey: isNewCreaturePurebred ? incubationEnvKey : (parent1ForMating?.originEnvironmentKey || incubationEnvKey),
                 speciesName: ALL_MODEL_DEFINITIONS.find(m=>m.modelKey === offspringModelKey)?.speciesName || "Unknown Species"
             });
             
@@ -1033,13 +1025,22 @@ Description: Surprisingly lush slopes...`;
                 let nextStage = creatureData.currentEvolutionStage + 1;
                 let nextModelKey = null;
 
+                // Purebred evolution now also considers the originEnvironmentName from the base definition
+                // to find the correct evolution line.
                 if (nextStage === 1) { 
-                    const ev1Def = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === baseDef.speciesName && m.evolutionStage === 1 && m.originEnvironmentName === baseDef.originEnvironmentName);
+                    const ev1Def = ALL_MODEL_DEFINITIONS.find(m => 
+                        m.speciesName === baseDef.speciesName && 
+                        m.evolutionStage === 1 && 
+                        m.originEnvironmentName === baseDef.originEnvironmentName);
                     if (ev1Def) nextModelKey = ev1Def.modelKey;
                 } else if (nextStage === 2) { 
-                    const ev2Def = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === baseDef.speciesName && m.evolutionStage === 2 && m.originEnvironmentName === baseDef.originEnvironmentName);
+                     const ev2Def = ALL_MODEL_DEFINITIONS.find(m => 
+                        m.speciesName === baseDef.speciesName && 
+                        m.evolutionStage === 2 && 
+                        m.originEnvironmentName === baseDef.originEnvironmentName);
                     if (ev2Def) nextModelKey = ev2Def.modelKey;
                 }
+
 
                 if (nextModelKey) {
                     creatureData.modelKey = nextModelKey; // Update modelKey for the new form
@@ -1049,7 +1050,7 @@ Description: Surprisingly lush slopes...`;
                     creatureData.evolvedInEnvironmentKey = evolutionEnvKey;
                     if (nextStage >= 2) creatureData.canEvolve = false;
                 } else {
-                    console.warn(`No next evolution model found for ${creatureData.name} from stage ${creatureData.currentEvolutionStage}. Maxed out.`);
+                    console.warn(`No next evolution model found for ${creatureData.name} from stage ${creatureData.currentEvolutionStage} in its origin line. Maxed out.`);
                     creatureData.canEvolve = false; 
                 }
             } else if (creatureData.isHybrid) {
@@ -1212,12 +1213,17 @@ Description: Surprisingly lush slopes...`;
                         evolutionInfo = creature.isPurebred ? "Max Evolution (Purebred)" : "Max Evolution (Hybrid)";
                     }
                     
+                    // Attempt to get environment name from key for display
+                    const originEnvObj = ENVIRONMENTS_DATA.find(env => env.key === creature.originEnvironmentKey);
+                    const originDisplayName = originEnvObj ? originEnvObj.name : (creature.originEnvironmentKey || 'N/A');
+
+
                     li.innerHTML = `
                         <div class="stored-creature-color" style="background-color: #${creature.color.getHexString()};"></div>
                         <div class="creature-details">
                             <strong>${creature.name}</strong>
                             <div class="info">Type: ${creature.modelKey} (Stage ${creature.currentEvolutionStage})</div>
-                            <div class="info">Origin: ${creature.originEnvironmentKey || 'N/A'} ${creature.isHybrid ? "[Hybrid]" : "[Purebred]"}</div>
+                            <div class="info">Origin: ${originDisplayName} ${creature.isHybrid ? "[Hybrid]" : "[Purebred]"}</div>
                             ${creature.hasSilverSheen ? '<div class="info" style="color: #C0C0C0;">Silver Sheen</div>' : ''}
                             <div class="evolution-timer">${evolutionInfo}</div>
                         </div>
@@ -1318,8 +1324,8 @@ Description: Surprisingly lush slopes...`;
             const amKey = ENVIRONMENTS_DATA.find(e => e.name === "Abyssal Marsh")?.key;
             if (amKey) {
                 INTRA_ENV_HYBRID_RULES[amKey] = INTRA_ENV_HYBRID_RULES[amKey] || {};
-                const mirefinBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Mirefin" && m.evolutionStage === 0);
-                const rootfangBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Rootfang" && m.evolutionStage === 0);
+                const mirefinBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Mirefin" && m.evolutionStage === 0 && m.originEnvironmentName === "Abyssal Marsh");
+                const rootfangBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Rootfang" && m.evolutionStage === 0 && m.originEnvironmentName === "Abyssal Marsh");
                 const mirefangHybridDef = ALL_MODEL_DEFINITIONS.find(m => m.fullName === "Mirefang");
                 if (mirefinBaseDef && rootfangBaseDef && mirefangHybridDef) {
                     const sortedPair = [mirefinBaseDef.modelKey, rootfangBaseDef.modelKey].sort().join('+');
@@ -1332,9 +1338,10 @@ Description: Surprisingly lush slopes...`;
             if (amKey && vlKey) {
                 const sortedEnvPair = [amKey, vlKey].sort().join('+');
                 INTER_ENV_HYBRID_RULES[sortedEnvPair] = INTER_ENV_HYBRID_RULES[sortedEnvPair] || {};
-                const mirefinBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Mirefin" && m.evolutionStage === 0);
-                const bloomtailBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Bloomtail" && m.evolutionStage === 0);
+                const mirefinBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Mirefin" && m.evolutionStage === 0 && m.originEnvironmentName === "Abyssal Marsh");
+                const bloomtailBaseDef = ALL_MODEL_DEFINITIONS.find(m => m.speciesName === "Bloomtail" && m.evolutionStage === 0 && m.originEnvironmentName === "Verdant Lowlands");
                 const miretailHybridDef = ALL_MODEL_DEFINITIONS.find(m => m.fullName === "Miretail");
+
                 if (mirefinBaseDef && bloomtailBaseDef && miretailHybridDef) {
                     const sortedSpeciesPair = [mirefinBaseDef.modelKey, bloomtailBaseDef.modelKey].sort().join('+');
                     INTER_ENV_HYBRID_RULES[sortedEnvPair][sortedSpeciesPair] = miretailHybridDef.modelKey;
