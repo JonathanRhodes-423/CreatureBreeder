@@ -1,0 +1,95 @@
+1. Abyssal Marsh
+Altitude: -500m to -200m
+
+Temperature: 60°F to 90°F
+
+Sun Exposure: 15% to 30%
+
+Humidity: 80% to 90%
+
+Description:
+A sunken, murky lowland where mist clings to twisted roots and stagnant pools. Light barely pierces the heavy fog. Ideal for strange amphibious lifeforms and ancient ruins.
+
+2. Scorching Basin
+Altitude: 0m to 500m
+
+Temperature: 150°F to 200°F
+
+Sun Exposure: 80% to 90%
+
+Humidity: 5% to 15%
+
+Description:
+A blistering desert flatland baked by relentless sun. Cracked earth, volcanic vents, and shimmering mirages dominate. Little survives except hardened beasts and nomads.
+
+3. Cloudspine Plateau
+Altitude: 5,000m to 8,000m
+
+Temperature: -10°F to 40°F
+
+Sun Exposure: 60% to 80%
+
+Humidity: 20% to 40%
+
+Description:
+A jagged, high-altitude land of floating clouds and sparse vegetation. Thin air and radiant sun create harsh yet majestic vistas. Home to rare minerals and reclusive mountain dwellers.
+
+4. Verdant Lowlands
+Altitude: 0m to 1,000m
+
+Temperature: 70°F to 100°F
+
+Sun Exposure: 50% to 70%
+
+Humidity: 60% to 80%
+
+Description:
+Lush jungles teeming with life. Dense foliage thrives under filtered sun. Rivers cut through fertile ground. A paradise for biodiversity and hidden civilizations.
+
+5. Frozen Stratoscape
+Altitude: 15,000m to 20,000m
+
+Temperature: -150°F to -80°F
+
+Sun Exposure: 70% to 90%
+
+Humidity: 5% to 10%
+
+Description:
+The air is razor-thin and freezing. Sunlight glares off crystalline ice and ancient alien structures. Survival here is nearly impossible without protection.
+
+6. Obsidian Wastes
+Altitude: 2,000m to 4,000m
+
+Temperature: 100°F to 160°F
+
+Sun Exposure: 40% to 60%
+
+Humidity: 10% to 25%
+
+Description:
+Charred black soil and volcanic debris cover these hills. Occasional ash clouds block the sun. This semi-arid region breeds resilience and danger.
+
+7. Twilight Fenlands
+Altitude: -100m to 200m
+
+Temperature: 50°F to 70°F
+
+Sun Exposure: 15% to 40%
+
+Humidity: 70% to 90%
+
+Description:
+A murky, semi-submerged land of reeds, mist, and bioluminescence. Insects hum and shadows move in the corners of perception. Treacherous, but full of mystery.
+
+8. Alpine Bloom
+Altitude: 6,000m to 9,000m
+
+Temperature: 30°F to 60°F
+
+Sun Exposure: 65% to 85%
+
+Humidity: 40% to 60%
+
+Description:
+Surprisingly lush slopes, covered in wildflowers and mountain streams. Bright sunlight reflects off snow and ice. Tranquil but difficult to reach.
