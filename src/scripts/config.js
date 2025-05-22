@@ -275,3 +275,31 @@ export let ALL_MODEL_DEFINITIONS = [];
 export let ENVIRONMENTS_DATA = [];
 export let INTRA_ENV_HYBRID_RULES = {};
 export let INTER_ENV_HYBRID_RULES = {};
+
+export const STORY_DATA = {
+    "chapters": [
+        {
+            "id": "chapter1_intro",
+            "entries": [
+                { "id": "entry1", "text": "Welcome, Breeder. Your journey begins now...\nThis world is full of wonders and mysteries." },
+                { "id": "entry2", "text": "Your first task is to understand the very essence of creation. Incubate your first egg." }
+            ],
+            "unlockCondition": null
+        },
+        {
+            "id": "chapter2_first_evolution",
+            "entries": [
+                { "id": "entry1", "text": "You've successfully evolved a creature! This is a significant step.\nEvolution unlocks new potentials." },
+                { "id": "entry2", "text": "Each creature carries a unique lineage. Some say the original forms hold ancient secrets..." }
+            ],
+            "triggerEvent": "firstEvolution",
+            "unlockConditionRequired": true
+        }
+    ],
+    "playerProgress": {
+        "currentChapterId": "chapter1_intro",
+        "currentEntryIndex": 0,
+        "unlockedChapters": ["chapter1_intro"],
+        "completedEvents": []
+    }
+};

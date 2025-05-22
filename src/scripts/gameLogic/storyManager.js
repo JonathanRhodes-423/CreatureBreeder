@@ -130,5 +130,5 @@ export function checkAndLoadInitialStory() {
     loadChapter(storyData.playerProgress.currentChapterId, storyData.playerProgress.currentEntryIndex);
     // Decide if terminal should be shown on load based on game state
     // For example, if they are in the middle of an unclosed story segment
-    // showStoryTerminal();
+    //showStoryTerminal();
 }
