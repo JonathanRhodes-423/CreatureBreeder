@@ -1120,11 +1120,18 @@ Description: Surprisingly lush slopes...`;
                 const newColorEnv = ENVIRONMENTS_DATA.find(e => e.key === creatureData.evolvedInEnvironmentKey);
                 if (newColorEnv && newColorEnv.ambiance && newColorEnv.ambiance.creatureColor) creatureData.color = newColorEnv.ambiance.creatureColor.clone();
                 
+                // Update name with evolution moniker
+                const ev1Match = ev1Def.fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV1 Model\)/i);
+                if (ev1Match) {
+                    const moniker = ev1Match[1].trim();
+                    creatureData.name = `${moniker} ${creatureData.speciesName}`;
+                }
+                
                 const storedIndex = storedCreatures.findIndex(c => c.uniqueId === creatureData.uniqueId);
                 if (storedIndex > -1) storedCreatures[storedIndex] = { ...creatureData };
                 
                 loadAndDisplayCreature(creatureData, true); 
-            } else creatureData.canEvolve = false; 
+            } else creatureData.canEvolve = false;
             
             updateCreatureCanEvolveStatus(creatureData);
             updateStoredCreaturesDisplay(); 
@@ -1176,7 +1183,6 @@ Description: Surprisingly lush slopes...`;
             const newColorEnv = ENVIRONMENTS_DATA.find(e => e.key === evolutionEnvKey);
             const evolutionColor = (newColorEnv && newColorEnv.ambiance && newColorEnv.ambiance.creatureColor) ? newColorEnv.ambiance.creatureColor.clone() : creatureData.color.clone();
 
-
             if (creatureData.isPurebred && creatureData.currentEvolutionStage === 1) { 
                 const baseDef = ALL_MODEL_DEFINITIONS.find(m => m.modelKey === creatureData.baseSpeciesModelKey);
                 if (!baseDef) { creatureData.canEvolve = false; return; }
@@ -1186,16 +1192,26 @@ Description: Surprisingly lush slopes...`;
                     creatureData.currentEvolutionStage = 2;
                     creatureData.color = evolutionColor;
                     creatureData.evolvedInEnvironmentKey = evolutionEnvKey;
-                    creatureData.level = 0; 
+                    creatureData.level = 0;
+                    
+                    // Update name with evolution moniker
+                    const ev2Match = ev2Def.fullName.match(/^([A-Za-z\s]+?)\s+([A-Za-z]+?)\s*\(EV2 Model\)/i);
+                    if (ev2Match) {
+                        const moniker = ev2Match[1].trim();
+                        creatureData.name = `${moniker} ${creatureData.speciesName}`;
+                    }
                 } else creatureData.canEvolve = false;
             } else if (creatureData.isHybrid && creatureData.currentEvolutionStage === 0) { 
                 creatureData.currentEvolutionStage = 1; 
                 creatureData.hasSilverSheen = true;
                 creatureData.color = evolutionColor; 
                 creatureData.evolvedInEnvironmentKey = evolutionEnvKey;
-                creatureData.level = 0; 
+                creatureData.level = 0;
+                
+                // For hybrids, add "Silver Sheen" to the name
+                creatureData.name = `Silver Sheen ${creatureData.name}`;
             }
-            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureData.level}`;
+            
             updateCreatureCanEvolveStatus(creatureData); 
             
             const storedIndex = storedCreatures.findIndex(c => c.uniqueId === creatureData.uniqueId);
