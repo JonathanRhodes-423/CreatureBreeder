@@ -7,6 +7,8 @@ import { scene, createPlaceholderModel, disposeGltf } from './threeSetup.js';
 import { ALL_MODEL_DEFINITIONS, ENVIRONMENTS_DATA, INTRA_ENV_HYBRID_RULES, INTER_ENV_HYBRID_RULES } from './initializers.js';
 import { getModelURL } from './fileLoader.js';
 import { updateActiveCreatureDisplay, updateStoredCreaturesDisplay, updateButtonState, resetIncubationTimerDisplay } from './uiManager.js';
+import { deserializeCreatureFromLoad } from './saveLoad.js'; // For consistency in deserialization
+
 
 export let egg, activeCreatureInstance;
 export let incubationInterval;
@@ -20,19 +22,98 @@ export let nextCreatureUniqueId = 0;
 export let parent1ForMating = null;
 export let parent2ForMating = null;
 
-export function spawnEgg(isHybrid, forIncubation = true) {
+export function resetCreatureManagerState() {
+    if (activeCreatureInstance) {
+        scene.remove(activeCreatureInstance);
+        disposeGltf(activeCreatureInstance);
+        activeCreatureInstance = null;
+    }
+    if (egg) {
+        scene.remove(egg);
+        disposeGltf(egg); // Assuming disposeGltf handles materials/geometry
+        egg = null;
+    }
+    if (incubationInterval) {
+        clearInterval(incubationInterval);
+        incubationInterval = null;
+    }
+
+    timeLeftForIncubation = cfg.EVOLUTION_TIME_SECONDS;
+    isIncubating = false;
+    isHybridIncubationSetup = false;
+    storedCreatures = [];
+    selectedForMating = [];
+    nextCreatureUniqueId = 0; // Or 1, depending on your ID scheme for new games
+    parent1ForMating = null;
+    parent2ForMating = null;
+
+    // Also update UI elements that reflect this state
+    updateActiveCreatureDisplay();
+    updateStoredCreaturesDisplay();
+    resetIncubationTimerDisplay();
+    if (dom.hybridEggMessage) dom.hybridEggMessage.style.display = 'none';
+    updateButtonState();
+    console.log("Creature manager state reset.");
+}
+
+// createCreatureObject: Ensure color handling is robust
+export function createCreatureObject(params) {
+    const modelDef = ALL_MODEL_DEFINITIONS.find(m => m.modelKey === params.modelKey);
+    let colorToUse = params.color;
+
+    if (typeof colorToUse === 'string') { // If color is a hex string from save file
+        try {
+            colorToUse = new THREE.Color(colorToUse.startsWith('#') ? colorToUse : `#${colorToUse}`);
+        } catch (e) {
+            console.warn("Invalid hex color string in createCreatureObject, using default. Params:", params, e);
+            colorToUse = new THREE.Color(0xcccccc);
+        }
+    } else if (!(colorToUse instanceof THREE.Color)) {
+        console.warn("Invalid color object provided to createCreatureObject, using default. Params:", params);
+        colorToUse = new THREE.Color(0xcccccc); // Default color
+    }
+
+    return {
+        uniqueId: params.uniqueId !== undefined ? params.uniqueId : nextCreatureUniqueId++,
+        name: params.name || (modelDef?.speciesName) || `Creature ${params.uniqueId !== undefined ? params.uniqueId : nextCreatureUniqueId -1}`,
+        modelKey: params.modelKey,
+        baseSpeciesModelKey: params.isPurebred && (modelDef?.evolutionStage === 0) ? params.modelKey : (params.baseSpeciesModelKey || null),
+        color: colorToUse.clone(), // Ensure it's a THREE.Color instance
+        currentEvolutionStage: params.currentEvolutionStage !== undefined ? params.currentEvolutionStage : (modelDef?.evolutionStage || 0),
+        level: params.level || 0,
+        isPurebred: params.isPurebred || false,
+        isHybrid: params.isHybrid || false,
+        canEvolve: params.canEvolve !== undefined ? params.canEvolve : true,
+        timeToNextEvolution: params.timeToNextEvolution !== undefined ? params.timeToNextEvolution : cfg.EVOLUTION_TIME_SECONDS,
+        originEnvironmentKey: params.originEnvironmentKey || (dom.environmentSelect ? dom.environmentSelect.value : null),
+        incubatedEnvironmentKey: params.incubatedEnvironmentKey,
+        evolvedInEnvironmentKey: params.evolvedInEnvironmentKey || null,
+        hasSilverSheen: params.hasSilverSheen || false,
+        speciesName: params.speciesName || (modelDef?.speciesName) || "Creature",
+        allowActivePanelActions: params.allowActivePanelActions || false
+    };
+}
+
+export function spawnEgg(isHybrid, forIncubation = true, eggColorOverride = null) {
     if (activeCreatureInstance) { scene.remove(activeCreatureInstance); disposeGltf(activeCreatureInstance); activeCreatureInstance = null; }
     if (egg) { scene.remove(egg); disposeGltf(egg); egg = null; }
     updateActiveCreatureDisplay();
 
-    const eggColor = isHybrid ? 0xDA70D6 : 0xffffff;
+    let finalEggColor;
+    if (eggColorOverride && eggColorOverride instanceof THREE.Color) {
+        finalEggColor = eggColorOverride.getHex();
+    } else {
+        finalEggColor = isHybrid ? 0xDA70D6 : 0xffffff; // Default orchid for hybrid, white for normal
+    }
+
     const geometry = new THREE.SphereGeometry(0.25, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color: eggColor, roughness: 0.6, metalness: 0.2 });
+    const material = new THREE.MeshStandardMaterial({ color: finalEggColor, roughness: 0.6, metalness: 0.2 });
     egg = new THREE.Mesh(geometry, material);
+    egg.userData = { isHybrid: isHybrid, color: new THREE.Color(finalEggColor) }; // Store color for saving
     egg.scale.y = 1.25;
     try {
         const box = new THREE.Box3().setFromObject(egg);
-        const size = box.getSize(new THREE.Vector3());
+        // const size = box.getSize(new THREE.Vector3()); // Not used here
         egg.position.set(0, -box.min.y + 0.01, 0);
     } catch(e) {
         console.error("Error positioning egg:", e);
@@ -43,7 +124,7 @@ export function spawnEgg(isHybrid, forIncubation = true) {
 
     if(dom.hybridEggMessage) dom.hybridEggMessage.style.display = isHybrid ? 'block' : 'none';
     if (!forIncubation) {
-        isIncubating = false; // Ensure this is set if just spawning without starting incubation
+        isIncubating = false;
     }
     updateButtonState();
 }
@@ -190,37 +271,6 @@ export function hatchCreature() {
     selectedForMating = []; // Clear selection after mating/hatching
     updateStoredCreaturesDisplay(); // From uiManager
     updateButtonState(); // From uiManager
-}
-
-
-export function createCreatureObject(params) {
-    const modelDef = ALL_MODEL_DEFINITIONS.find(m => m.modelKey === params.modelKey);
-
-    let colorToClone = params.color;
-    if (!(colorToClone instanceof THREE.Color)) {
-        console.warn("Invalid color provided to createCreatureObject, using default. Params:", params);
-        colorToClone = new THREE.Color(0xcccccc);
-    }
-
-    return {
-        uniqueId: params.uniqueId !== undefined ? params.uniqueId : nextCreatureUniqueId++,
-        name: params.name || (modelDef?.speciesName) || `Creature ${nextCreatureUniqueId}`, // Use nextCreatureUniqueId for default name before increment for consistency
-        modelKey: params.modelKey,
-        baseSpeciesModelKey: params.isPurebred && (modelDef?.evolutionStage === 0) ? params.modelKey : (params.baseSpeciesModelKey || null),
-        color: colorToClone.clone(),
-        currentEvolutionStage: params.currentEvolutionStage !== undefined ? params.currentEvolutionStage : (modelDef?.evolutionStage || 0),
-        level: params.level || 0,
-        isPurebred: params.isPurebred || false,
-        isHybrid: params.isHybrid || false,
-        canEvolve: params.canEvolve !== undefined ? params.canEvolve : true, // Initial check will refine this
-        timeToNextEvolution: params.timeToNextEvolution !== undefined ? params.timeToNextEvolution : cfg.EVOLUTION_TIME_SECONDS,
-        originEnvironmentKey: params.originEnvKey || (dom.environmentSelect ? dom.environmentSelect.value : null), // Default to current selected env if not specified
-        incubatedEnvironmentKey: params.incubatedEnvKey, // Environment it was incubated in
-        evolvedInEnvironmentKey: params.evolvedInEnvironmentKey || null, // Environment it evolved in
-        hasSilverSheen: params.hasSilverSheen || false,
-        speciesName: params.speciesName || (modelDef?.speciesName) || "Creature",
-        allowActivePanelActions: params.allowActivePanelActions || false // Default to false
-    };
 }
 
 export function loadAndDisplayCreature(creatureInstanceData, isEvolutionDisplayUpdate = false, sourceAction = 'unknown') {
@@ -786,4 +836,141 @@ export function formatTimeGlobal(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     const seconds = (totalSeconds % 60).toString().padStart(2, '0');
     return `${minutes}:${seconds}`;
+}
+
+export function getCreatureManagerState() {
+    // Ensure parent data is just the creature data, not the full instance
+    const p1Data = parent1ForMating ? { ...parent1ForMating } : null;
+    const p2Data = parent2ForMating ? { ...parent2ForMating } : null;
+
+    // Create a serializable version of eggData, including its color
+    let serializableEggData = null;
+    if (egg && egg.userData) {
+        serializableEggData = {
+            isHybrid: egg.userData.isHybrid,
+            // Color should be handled by the saveLoad serialization
+        };
+        if (egg.userData.color instanceof THREE.Color) {
+           // This will be handled by serializeCreatureForSave in saveLoad.js if we pass the whole egg.userData
+           // For now, we assume eggData in gameState is simple.
+        }
+    }
+
+
+    return {
+        // Primitives and simple objects first
+        nextCreatureUniqueId: nextCreatureUniqueId,
+        isIncubating: isIncubating,
+        timeLeftForIncubation: timeLeftForIncubation,
+        isHybridIncubationSetup: isHybridIncubationSetup,
+        // currentEnvironmentKey will be saved by script.js as it's a global UI state
+
+        // Complex objects that need serialization handled by saveLoad.js
+        storedCreatures: storedCreatures.map(c => ({ ...c })), // Pass copies to be serialized
+        activeCreatureData: activeCreatureInstance ? { ...activeCreatureInstance.userData } : null,
+        eggData: serializableEggData,
+        parent1ForMatingData: p1Data,
+        parent2ForMatingData: p2Data,
+    };
+}
+
+export function setCreatureManagerState(loadedState) {
+    if (!loadedState) {
+        console.error("No state provided to setCreatureManagerState");
+        resetCreatureManagerState(); // Fallback to clean slate
+        return;
+    }
+
+    console.log("Setting creature manager state from loaded data:", loadedState);
+
+    // Clear current scene objects related to creatures/eggs before applying new state
+    if (activeCreatureInstance) {
+        scene.remove(activeCreatureInstance);
+        disposeGltf(activeCreatureInstance);
+        activeCreatureInstance = null;
+    }
+    if (egg) {
+        scene.remove(egg);
+        disposeGltf(egg);
+        egg = null;
+    }
+    if (incubationInterval) {
+        clearInterval(incubationInterval);
+        incubationInterval = null;
+    }
+
+    // Restore state variables - use defaults if properties are missing
+    nextCreatureUniqueId = loadedState.nextCreatureUniqueId || 0;
+    isIncubating = loadedState.isIncubating || false;
+    timeLeftForIncubation = loadedState.timeLeftForIncubation !== undefined ? loadedState.timeLeftForIncubation : cfg.EVOLUTION_TIME_SECONDS;
+    isHybridIncubationSetup = loadedState.isHybridIncubationSetup || false;
+
+    // Creatures: Use deserializeCreatureFromLoad for consistent object creation
+    storedCreatures = (loadedState.storedCreatures || []).map(cData => deserializeCreatureFromLoad(cData)).filter(c => c);
+    parent1ForMating = loadedState.parent1ForMatingData ? deserializeCreatureFromLoad(loadedState.parent1ForMatingData) : null;
+    parent2ForMating = loadedState.parent2ForMatingData ? deserializeCreatureFromLoad(loadedState.parent2ForMatingData) : null;
+    
+    selectedForMating = []; // Reset on load, user can re-select. Mating selection is transient.
+
+    // Restore active creature if data exists
+    if (loadedState.activeCreatureData) {
+        const activeData = deserializeCreatureFromLoad(loadedState.activeCreatureData);
+        if (activeData) {
+            // The 'allowActivePanelActions' flag for an active creature from a save
+            // should probably default to true if it's being made active, or be based on game logic.
+            // For simplicity, let's assume it becomes active with panel actions.
+            activeData.allowActivePanelActions = true;
+            loadAndDisplayCreature(activeData, false, 'load_activation');
+        }
+    }
+
+    // Re-spawn egg if it was present and incubation was in progress or setup
+    if (loadedState.eggData && (isIncubating || isHybridIncubationSetup)) {
+        let eggColorFromLoad = null;
+        if (loadedState.eggData.color && typeof loadedState.eggData.color === 'string') {
+             eggColorFromLoad = new THREE.Color(loadedState.eggData.color.startsWith('#') ? loadedState.eggData.color : `#${loadedState.eggData.color}`);
+        } else if (loadedState.eggData.color instanceof THREE.Color) {
+            eggColorFromLoad = loadedState.eggData.color;
+        }
+
+        spawnEgg(loadedState.eggData.isHybrid || false, false, eggColorFromLoad); // Spawn but don't start incubation yet
+        if (isIncubating) {
+            // Ensure timer display is correct for ongoing incubation
+            if(dom.timerDisplay) dom.timerDisplay.textContent = `Time: ${formatTimeGlobal(timeLeftForIncubation)}`;
+            // Restart incubation interval if it was running
+            if (timeLeftForIncubation > 0) {
+                if (incubationInterval) clearInterval(incubationInterval); // Clear any old one
+                incubationInterval = setInterval(() => {
+                    timeLeftForIncubation--;
+                    if(dom.timerDisplay) dom.timerDisplay.textContent = `Time: ${formatTimeGlobal(timeLeftForIncubation)}`;
+                    if (timeLeftForIncubation <= 0) {
+                        clearInterval(incubationInterval);
+                        hatchCreature(); // This needs to be context-aware of loaded state
+                    }
+                }, 1000);
+            } else { // Timer was at 0, should hatch immediately or be in a hatched state.
+                 // This case might need more thought: if timeLeft is 0, hatchCreature should have occurred.
+                 // For simplicity, if loading and timeLeftForIncubation is <=0, assume creature is already hatched and active.
+                 // The activeCreatureData should reflect this.
+                 isIncubating = false; // It should have hatched.
+            }
+        }
+    } else if (loadedState.eggData && !isIncubating && isHybridIncubationSetup) { // Mating was set up, egg ready, but not incubating
+         let eggColorFromLoad = null;
+        if (loadedState.eggData.color && typeof loadedState.eggData.color === 'string') {
+             eggColorFromLoad = new THREE.Color(loadedState.eggData.color.startsWith('#') ? loadedState.eggData.color : `#${loadedState.eggData.color}`);
+        } else if (loadedState.eggData.color instanceof THREE.Color) {
+            eggColorFromLoad = loadedState.eggData.color;
+        }
+        spawnEgg(loadedState.eggData.isHybrid || false, false, eggColorFromLoad);
+        if(dom.startIncubationButton) dom.startIncubationButton.textContent = "Incubate Mated Egg";
+    }
+
+
+    // Update all UI elements
+    updateActiveCreatureDisplay();
+    updateStoredCreaturesDisplay();
+    if (!isIncubating) resetIncubationTimerDisplay(); // Only reset if not actively incubating
+    updateButtonState();
+    console.log("Creature manager state has been set from loaded data.");
 }

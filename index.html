@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app-header">
-        <div id="app-title">Creature Universe</div>
+    <div id="app-header" style="display: none;"> <div id="app-title">Creature Universe</div>
         <div id="model-status-header">Models: 0 / 186</div>
         <button id="hamburger-menu-button" title="Upload Models">&#9776;</button>
     </div>
@@ -27,8 +26,34 @@
         </div>
     </div>
 
-    <div id="main-container">
-        <div id="controls">
+    <div id="main-menu-container">
+        <h1>Creature Universe</h1>
+        <button id="new-game-button" class="menu-button">New Game</button>
+        <button id="load-game-button" class="menu-button">Load Game</button>
+
+        <div id="new-game-prompt" class="menu-dialog" style="display: none;">
+            <h3>Enter Your Name</h3>
+            <input type="text" id="username-input" placeholder="Username (3-15 chars, a-z, 0-9, _)">
+            <div id="new-game-error" class="error-message" style="display: none;"></div>
+            <div class="dialog-buttons">
+                <button id="start-game-final-button" class="menu-button">Start</button>
+                <button id="cancel-new-game-button" class="menu-button secondary">Cancel</button>
+            </div>
+        </div>
+
+        <div id="load-game-list-container" class="menu-dialog" style="display: none;">
+            <h3>Select a Saved Game</h3>
+            <ul id="saved-games-list">
+                <li>No saved games found.</li>
+            </ul>
+            <div id="load-game-error" class="error-message" style="display: none;"></div>
+            <div class="dialog-buttons">
+                <button id="cancel-load-game-button" class="menu-button secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-container" style="display: none;"> <div id="controls">
             <h3>Incubation & Evolution</h3>
             <div class="control-group">
                 <label for="environmentSelect">Incubation/Evolution Environment:</label>
@@ -39,26 +64,26 @@
             <div id="hybridEggMessage" style="display:none;">Hybrid Egg Ready!</div>
             <h3 style="margin-top: 20px;">Mating</h3>
             <button id="mateButton" style="margin-top: 5px;">Mate Selected Creatures</button>
+            <button id="back-to-menu-button" class="menu-button secondary" style="margin-top: 30px;">Save & Back to Menu</button>
         </div>
 
         <div id="viewerContainer"></div>
 
-        <div id="side-panels"> 
+        <div id="side-panels">
             <div id="active-creature-panel">
                 <h3>Active Creature</h3>
                 <div id="activeCreatureDetails">
-                    {/* Active creature details will be populated here */}
                     <p>No creature active.</p>
                 </div>
             </div>
             <div id="storage-panel">
                 <h3>Creature Storage (Max 10)</h3>
                 <ul id="storedCreaturesList">
-                    {/* Creature slots dynamically added */}
                 </ul>
             </div>
         </div>
     </div>
+
     <script type="importmap">
     {
         "imports": {

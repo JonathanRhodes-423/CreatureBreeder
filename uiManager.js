@@ -1,18 +1,20 @@
 // uiManager.js
-import * as THREE from 'three';
+import * as THREE from 'three'; // If directly used, e.g. for instanceof THREE.Color
 import * as dom from './domElements.js';
 import * as cfg from './config.js';
 import { ENVIRONMENTS_DATA, ALL_MODEL_DEFINITIONS } from './initializers.js';
-import { loadedModelData } from './fileLoader.js'; // For model status
+import { loadedModelData } from './fileLoader.js';
 import {
     activeCreatureInstance, storedCreatures, selectedForMating, isIncubating, isHybridIncubationSetup, egg,
     timeLeftForIncubation, parent1ForMating, parent2ForMating,
-    activateStoredCreature, /* removeStoredCreature, */ // removeStoredCreature is no longer called from UI
+    activateStoredCreature,
     attemptLevelUpCreature, attemptNaturalEvolution,
     updateCreatureCanEvolveStatus, formatTimeGlobal,
     attemptStoreActiveCreature, discardActiveCreature
 } from './creatureManager.js';
-
+// Import game interaction functions from script.js or a new gameController.js if they are moved
+// For now, assume they might be passed or called if uiManager directly triggers game loads.
+// import { handleLoadSelectedGame } from './script.js'; // Example if it's in script.js
 
 export function populateEnvironmentDropdown() {
     if (!dom.environmentSelect) return;
@@ -394,5 +396,68 @@ export function updateModelStatusHeader() {
     const totalDefinitions = ALL_MODEL_DEFINITIONS.length;
     if (dom.modelStatusHeader) {
         dom.modelStatusHeader.textContent = `Models: ${loadedCount} / ${totalDefinitions}`;
+    }
+}
+
+// --- New UI functions for Menu and Game State ---
+
+export function showMainMenu() {
+    if (dom.mainMenuContainer) dom.mainMenuContainer.style.display = 'flex';
+    if (dom.gameContainer) dom.gameContainer.style.display = 'none';
+    if (dom.appHeader) dom.appHeader.style.display = 'none'; // Hide game header
+    // Hide any dialogs
+    if (dom.newGamePrompt) dom.newGamePrompt.style.display = 'none';
+    if (dom.loadGameListContainer) dom.loadGameListContainer.style.display = 'none';
+    if (dom.newGameError) dom.newGameError.style.display = 'none';
+    if (dom.loadGameError) dom.loadGameError.style.display = 'none';
+
+    // Reset input fields
+    if(dom.usernameInput) dom.usernameInput.value = '';
+}
+
+export function showGameView() {
+    if (dom.mainMenuContainer) dom.mainMenuContainer.style.display = 'none';
+    if (dom.gameContainer) dom.gameContainer.style.display = 'flex'; // Or 'block' depending on layout
+    if (dom.appHeader) dom.appHeader.style.display = 'flex'; // Show game header
+}
+
+export function showNewGamePrompt() {
+    if (dom.newGamePrompt) dom.newGamePrompt.style.display = 'block';
+    if (dom.loadGameListContainer) dom.loadGameListContainer.style.display = 'none';
+    if (dom.usernameInput) dom.usernameInput.focus();
+    if (dom.newGameError) dom.newGameError.textContent = ''; dom.newGameError.style.display = 'none';
+}
+
+export function showLoadGameList(savedGames, loadGameHandler) { // loadGameHandler is a function from script.js
+    if (dom.loadGameListContainer) dom.loadGameListContainer.style.display = 'block';
+    if (dom.newGamePrompt) dom.newGamePrompt.style.display = 'none';
+    if (dom.savedGamesList) {
+        dom.savedGamesList.innerHTML = ''; // Clear previous list
+        if (savedGames && savedGames.length > 0) {
+            savedGames.forEach(gameUsername => {
+                const li = document.createElement('li');
+                li.textContent = gameUsername;
+                li.dataset.username = gameUsername;
+                li.addEventListener('click', () => loadGameHandler(gameUsername));
+                dom.savedGamesList.appendChild(li);
+            });
+        } else {
+            dom.savedGamesList.innerHTML = '<li class="no-saves">No saved games found.</li>';
+        }
+    }
+    if (dom.loadGameError) dom.loadGameError.textContent = ''; dom.loadGameError.style.display = 'none';
+}
+
+export function displayNewGameError(message) {
+    if (dom.newGameError) {
+        dom.newGameError.textContent = message;
+        dom.newGameError.style.display = message ? 'block' : 'none';
+    }
+}
+
+export function displayLoadGameError(message) {
+    if (dom.loadGameError) {
+        dom.loadGameError.textContent = message;
+        dom.loadGameError.style.display = message ? 'block' : 'none';
     }
 }
