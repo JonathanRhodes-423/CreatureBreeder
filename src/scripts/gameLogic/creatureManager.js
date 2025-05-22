@@ -8,7 +8,7 @@ import { ALL_MODEL_DEFINITIONS, ENVIRONMENTS_DATA, INTRA_ENV_HYBRID_RULES, INTER
 import { getModelURL } from '../utils/fileLoader.js';
 import { updateActiveCreatureDisplay, updateStoredCreaturesDisplay, updateButtonState, resetIncubationTimerDisplay } from '../ui/uiManager.js';
 import { deserializeCreatureFromLoad } from './saveLoad.js'; // For consistency in deserialization
-
+import { triggerStoryEvent } from './storyManager.js';
 
 export let egg, activeCreatureInstance;
 export let incubationInterval;
@@ -863,7 +863,7 @@ export function getCreatureManagerState() {
         isIncubating: isIncubating,
         timeLeftForIncubation: timeLeftForIncubation,
         isHybridIncubationSetup: isHybridIncubationSetup,
-        // currentEnvironmentKey will be saved by script.js as it's a global UI state
+        // currentEnvironmentKey will be saved by app.js as it's a global UI state
 
         // Complex objects that need serialization handled by saveLoad.js
         storedCreatures: storedCreatures.map(c => ({ ...c })), // Pass copies to be serialized

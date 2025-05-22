@@ -38,3 +38,9 @@ export const gameContainer = document.getElementById('main-container'); // Exist
 export const backToMenuButton = document.getElementById('back-to-menu-button');
 
 export const appHeader = document.getElementById('app-header');
+
+export const storyTerminalPanel = document.getElementById('story-terminal-panel');
+export const storyTextArea = document.getElementById('story-text-area');
+export const storyNextButton = document.getElementById('story-next-button');
+export const storyBackButton = document.getElementById('story-back-button');
+export const storyCloseButton = document.getElementById('story-close-button');

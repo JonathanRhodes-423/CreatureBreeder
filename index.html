@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creature Universe - Incubator & Breeder</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./src/css/style.css">
 </head>
 <body>
     <div id="app-header" style="display: none;"> <div id="app-title">Creature Universe</div>
@@ -83,7 +83,16 @@
             </div>
         </div>
     </div>
-
+    <div id="story-terminal-panel" class="story-terminal-hidden">
+        <div id="story-terminal-content">
+            <p id="story-text-area"></p>
+        </div>
+        <div id="story-terminal-controls">
+            <button id="story-back-button">Back</button>
+            <button id="story-next-button">Next</button>
+            <button id="story-close-button">Close</button>
+        </div>
+    </div>
     <script type="importmap">
     {
         "imports": {
@@ -92,6 +101,6 @@
         }
     }
     </script>
-    <script type="module" src="script.js"></script>
+    <script type="module" src="./src/scripts/app.js"></script>
 </body>
 </html>

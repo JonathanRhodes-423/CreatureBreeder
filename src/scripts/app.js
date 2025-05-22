@@ -1,4 +1,4 @@
-// script.js (Main Orchestrator)
+// app.js (Main Orchestrator)
 import * as THREE from 'three';
 import * as dom from './ui/domElements.js';
 import * as cfg from './config.js';
@@ -10,6 +10,7 @@ import * as ui from './ui/uiManager.js';
 import * as cm from './gameLogic/creatureManager.js';
 import * as sl from './gameLogic/saveLoad.js'; // Save/Load module (API version)
 import { processAndLoadFiles, loadedModelData, previewSelectedFiles } from './utils/fileLoader.js'; // Added previewSelectedFiles
+import { initializeStoryManager, checkAndLoadInitialStory, triggerStoryEvent } from './gameLogic/storyManager.js'; // Adjust path if needed
 
 
 // --- Global State ---
@@ -45,6 +46,12 @@ async function initializeFullApp() {
     console.log("App systems initialized. Showing main menu.");
     ui.showMainMenu(); //
     setupAllEventListeners(); // Sets up menu and general game listeners
+
+    initializeStoryManager(); // Initialize after DOM is ready
+    console.log("Story Manager initialized.");
+
+    checkAndLoadInitialStory();
+    console.log("App initialization complete. Starting animation and game update loops.");
 }
 
 

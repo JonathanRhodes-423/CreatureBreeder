@@ -12,9 +12,9 @@ import {
     updateCreatureCanEvolveStatus, formatTimeGlobal,
     attemptStoreActiveCreature, discardActiveCreature
 } from '../gameLogic/creatureManager.js';
-// Import game interaction functions from script.js or a new gameController.js if they are moved
+// Import game interaction functions from app.js or a new gameController.js if they are moved
 // For now, assume they might be passed or called if uiManager directly triggers game loads.
-// import { handleLoadSelectedGame } from './script.js'; // Example if it's in script.js
+// import { handleLoadSelectedGame } from './app.js'; // Example if it's in app.js
 
 export function populateEnvironmentDropdown() {
     if (!dom.environmentSelect) return;
@@ -428,7 +428,7 @@ export function showNewGamePrompt() {
     if (dom.newGameError) dom.newGameError.textContent = ''; dom.newGameError.style.display = 'none';
 }
 
-export function showLoadGameList(savedGames, loadGameHandler) { // loadGameHandler is a function from script.js
+export function showLoadGameList(savedGames, loadGameHandler) { // loadGameHandler is a function from app.js
     if (dom.loadGameListContainer) dom.loadGameListContainer.style.display = 'block';
     if (dom.newGamePrompt) dom.newGamePrompt.style.display = 'none';
     if (dom.savedGamesList) {

@@ -136,3 +136,81 @@ canvas { display: block; max-width: 100%; max-height: 100%; }
 @media (max-width: 1200px) { #main-container { flex-direction: column; align-items: center; padding-top: 70px; height: auto; } #controls, #viewerContainer, #side-panels { width: 95%; max-width: 700px; margin-bottom: 15px; height: auto; } #active-creature-panel, #storage-panel { max-height: 40vh; } #viewerContainer { min-height: 400px; } }
 .modal-button.discard-button-style { background-color: #e74c3c; color: white; }
 .modal-button.discard-button-style:hover:not(:disabled) { background-color: #c0392b; }
+
+#story-terminal-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1a252f; /* Dark terminal background */
+    color: #00ff00; /* Green terminal text */
+    font-family: 'Courier New', Courier, monospace;
+    border-top: 2px solid #00ff00;
+    box-shadow: 0 -2px 10px rgba(0, 255, 0, 0.3);
+    padding: 15px;
+    box-sizing: border-box;
+    z-index: 1002; /* Ensure it's above other content but potentially below modals */
+    transform: translateY(100%); /* Start hidden below the viewport */
+    transition: transform 0.5s ease-in-out;
+    max-height: 30%; /* Limit height */
+    display: flex;
+    flex-direction: column;
+}
+
+#story-terminal-panel.story-terminal-visible {
+    transform: translateY(0); /* Slide into view */
+}
+
+#story-terminal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding-right: 10px; /* For scrollbar */
+}
+
+#story-terminal-content p {
+    margin: 0 0 10px 0;
+    white-space: pre-wrap; /* Preserve line breaks from your story text */
+    font-size: 0.9em;
+}
+
+#story-terminal-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#story-terminal-controls button {
+    background-color: #008f00;
+    color: #1a252f;
+    border: 1px solid #00ff00;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#story-terminal-controls button:hover {
+    background-color: #00ff00;
+    color: #1a252f;
+}
+
+#story-terminal-controls button:disabled {
+    background-color: #333;
+    color: #666;
+    border-color: #555;
+    cursor: not-allowed;
+}
+
+/* Scrollbar for terminal content */
+#story-terminal-content::-webkit-scrollbar {
+    width: 8px;
+}
+#story-terminal-content::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+#story-terminal-content::-webkit-scrollbar-thumb {
+    background: #00ff00;
+}
+#story-terminal-content::-webkit-scrollbar-thumb:hover {
+    background: #00cc00;
+}

@@ -5,7 +5,7 @@ import { updateAmbiance, onWindowResize } from '../rendering/threeSetup.js';
 import { ENVIRONMENTS_DATA } from '../gameLogic/initializers.js';
 import { previewSelectedFiles, processAndLoadFiles } from '../utils/fileLoader.js';
 import { startNewEggIncubation, setupMating } from '../gameLogic/creatureManager.js';
-// Import main game interaction handlers from script.js
+// Import main game interaction handlers from app.js
 import {
     handleNewGameClick, handleLoadGameClick,
     handleStartGameFinal, handleCancelNewGame,

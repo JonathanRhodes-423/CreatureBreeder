@@ -267,7 +267,7 @@ export const INTRA_HYBRID_SETUP_DATA = [
     { env: "Alpine Bloom", pairs: [["Floracorn", "Gladehorn", "Florahorn"], ["Floracorn", "Sunpetal", "Florapetal"], ["Gladehorn", "Sunpetal", "Gladepetal"]] }
 ];
 
-export const INTER_HYBRID_SETUP_DATA = [ /* ... content as before ... */ ]; // Assuming this was populated in your original script.js
+export const INTER_HYBRID_SETUP_DATA = [ /* ... content as before ... */ ]; // Assuming this was populated in your original app.js
 
 // Placeholder for initial values that will be populated by initializers.js
 // These are exported so other modules can import the populated versions.
