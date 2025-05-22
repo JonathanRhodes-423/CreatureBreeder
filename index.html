@@ -38,6 +38,8 @@
             <div id="timer">Time: 02:00</div>
             <div id="hybridEggMessage" style="display:none;">Hybrid Egg Ready!</div>
             <button id="evolveCreatureButton" style="margin-top: 10px;">Evolve Active Creature</button>
+            <div id="activeCreatureLevelDisplay" style="text-align: center; margin-top: 8px; font-weight: bold;">Level: N/A</div>
+            <button id="levelUpButton" style="margin-top: 10px;">Level Up Active Creature</button>
             <button id="storeActiveCreatureButton" style="margin-top: 10px;">Store Active Creature</button>
             <h3 style="margin-top: 20px;">Mating</h3>
             <button id="mateButton" style="margin-top: 5px;">Mate Selected Creatures</button>
@@ -45,11 +47,20 @@
 
         <div id="viewerContainer"></div>
 
-        <div id="storage-panel">
-            <h3>Creature Storage (Max 10)</h3>
-            <ul id="storedCreaturesList">
-                {/* Creature slots dynamically added */}
-            </ul>
+        <div id="side-panels"> 
+            <div id="active-creature-panel">
+                <h3>Active Creature</h3>
+                <div id="activeCreatureDetails">
+                    {/* Active creature details will be populated here */}
+                    <p>No creature active.</p>
+                </div>
+            </div>
+            <div id="storage-panel">
+                <h3>Creature Storage (Max 10)</h3>
+                <ul id="storedCreaturesList">
+                    {/* Creature slots dynamically added */}
+                </ul>
+            </div>
         </div>
     </div>
     <script type="importmap">
