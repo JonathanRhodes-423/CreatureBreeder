@@ -627,24 +627,32 @@ export function activateStoredCreature(uniqueId) {
 
 
 export function attemptStoreActiveCreature() {
-    if (!activeCreatureInstance || !activeCreatureInstance.userData) { alert("No active creature to store."); return; }
-    const creatureDataToStore = {...activeCreatureInstance.userData};
+    if (!activeCreatureInstance || !activeCreatureInstance.userData) {
+        alert("No active creature to store.");
+        return;
+    }
+    const creatureDataToStore = { ...activeCreatureInstance.userData };
 
     // When storing, the creature is no longer "active with panel actions"
-    // The stored copy should reflect its current state but not special active-panel privileges.
     creatureDataToStore.allowActivePanelActions = false;
 
     updateCreatureCanEvolveStatus(creatureDataToStore); // Ensure its evolvability is current
 
-    const existingStoredIndex = storedCreatures.findIndex(c => c.uniqueId === creatureDataToStore.uniqueId);
+    const existingStoredIndex = storedCreatures.findIndex(c => c && c.uniqueId === creatureDataToStore.uniqueId);
     if (existingStoredIndex === -1) { // Not in storage yet
-        if (storedCreatures.length >= cfg.MAX_STORED_CREATURES) { alert("Storage is full. Cannot store new creature."); return; }
+        if (storedCreatures.length >= cfg.MAX_STORED_CREATURES) {
+            alert("Storage is full. Cannot store new creature.");
+            // If storage is full, we might not want to remove the active creature from the scene,
+            // allowing the user to discard it instead if they wish.
+            // For now, it remains active if storage is full.
+            return;
+        }
         storedCreatures.push(creatureDataToStore);
     } else { // Already in storage, update it
         storedCreatures[existingStoredIndex] = creatureDataToStore;
     }
 
-    // Remove from viewer
+    // Remove from viewer after successful store/update.
     scene.remove(activeCreatureInstance);
     disposeGltf(activeCreatureInstance);
     activeCreatureInstance = null;
@@ -654,40 +662,55 @@ export function attemptStoreActiveCreature() {
     updateButtonState();
 }
 
-export function removeStoredCreature(uniqueId) {
-    const creatureData = storedCreatures.find(c => c && c.uniqueId === uniqueId);
-    if (!creatureData) { console.warn("Creature to remove not found:", uniqueId); return; }
+export function discardActiveCreature() {
+    if (!activeCreatureInstance || !activeCreatureInstance.userData) {
+        alert("No active creature to discard.");
+        return;
+    }
+    if (isIncubating) {
+        alert("Cannot discard a creature during incubation.");
+        return;
+    }
 
-    // Optional: Add a confirmation dialog here if desired
-    // if (!confirm(`Are you sure you want to remove ${creatureData.name || 'this creature'}? This action cannot be undone.`)) return;
+    const creatureData = activeCreatureInstance.userData;
+    const confirmDiscard = confirm(`Are you sure you want to discard ${creatureData.name || 'this creature'}? This action cannot be undone.`);
+    if (!confirmDiscard) {
+        return;
+    }
 
-    storedCreatures = storedCreatures.filter(c => !c || c.uniqueId !== uniqueId);
+    // Remove from storage if it was ever stored
+    const storedIndex = storedCreatures.findIndex(c => c && c.uniqueId === creatureData.uniqueId);
+    if (storedIndex > -1) {
+        storedCreatures.splice(storedIndex, 1);
+    }
 
-    // If the removed creature was selected for mating, clear that selection
-    const matingIndex = selectedForMating.indexOf(uniqueId);
+    // Remove from viewer
+    scene.remove(activeCreatureInstance);
+    disposeGltf(activeCreatureInstance);
+    activeCreatureInstance = null;
+
+    // If the discarded creature was selected for mating, clear that selection part.
+    const matingIndex = selectedForMating.indexOf(creatureData.uniqueId);
     if (matingIndex > -1) {
         selectedForMating.splice(matingIndex, 1);
     }
-
-    // If the removed creature was also the active creature, clear it from the viewer
-    if (activeCreatureInstance && activeCreatureInstance.userData && activeCreatureInstance.userData.uniqueId === uniqueId) {
-        scene.remove(activeCreatureInstance);
-        disposeGltf(activeCreatureInstance);
-        activeCreatureInstance = null;
-        updateActiveCreatureDisplay(); // Clear active panel
-    }
-
-    updateStoredCreaturesDisplay(); // Redraws list, which will handle selection highlights and action button visibility
-    updateButtonState();
-
-    // If one creature remains selected for mating (e.g., after removing its partner), ensure its actions are visible
-    if (selectedForMating.length === 1) {
-        const itemLi = dom.storedCreaturesList.querySelector(`li[data-creature-unique-id="${selectedForMating[0]}"]`);
-        if (itemLi) {
-            const actionsDiv = itemLi.querySelector('.slot-actions');
-            if (actionsDiv) actionsDiv.style.display = 'flex';
+    // If mating was fully set up with this creature, reset mating setup
+    if (parent1ForMating && parent1ForMating.uniqueId === creatureData.uniqueId ||
+        parent2ForMating && parent2ForMating.uniqueId === creatureData.uniqueId) {
+        parent1ForMating = null;
+        parent2ForMating = null;
+        isHybridIncubationSetup = false;
+        // If an egg was representing this pending mating, remove it too
+        if (egg && !isIncubating) { // only if not currently mid-timer
+             scene.remove(egg); disposeGltf(egg); egg = null;
+             if(dom.hybridEggMessage) dom.hybridEggMessage.style.display = 'none';
         }
     }
+
+
+    updateActiveCreatureDisplay();
+    updateStoredCreaturesDisplay();
+    updateButtonState();
 }
 
 export function setupMating() {
