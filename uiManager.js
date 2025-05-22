@@ -171,32 +171,56 @@ export function updateStoredCreaturesDisplay() {
 
 
 export function toggleMatingSelection(creatureUniqueId) {
-    if (isIncubating || (isHybridIncubationSetup && egg)) { // Don't allow selection changes during these states
+    if (isIncubating || (isHybridIncubationSetup && egg)) {
         alert("Cannot change mating selection during incubation or when a mated egg is ready.");
         return;
     }
 
     const creature = storedCreatures.find(c => c && c.uniqueId === creatureUniqueId);
-    if (!creature) return; // Should not happen if clicking on a rendered creature
+    if (!creature) return;
 
-    // Prevent selecting active creature for mating
     if (activeCreatureInstance && activeCreatureInstance.userData && activeCreatureInstance.userData.uniqueId === creatureUniqueId) {
         alert("Cannot select the currently active creature for mating. Please store it first or choose another.");
         return;
     }
-    // Only allow selection of Stage 0 creatures for mating
-    if (creature.currentEvolutionStage !== 0) {
-        alert("Only BASE creatures (Stage 0) can be selected for mating.");
-        // If a non-base creature was clicked and there was a mating selection, clear it.
-        if (selectedForMating.length > 0) selectedForMating.length = 0; // Clear array
-    } else {
-        const index = selectedForMating.indexOf(creatureUniqueId);
-        if (index > -1) { // Creature is selected, deselect it
-            selectedForMating.splice(index, 1);
-        } else { // Creature is not selected, try to select it
-            if (selectedForMating.length < 2) {
-                selectedForMating.push(creatureUniqueId);
-            } else { // Already 2 selected, replace the first one (FIFO for selection of 2)
+
+    const index = selectedForMating.indexOf(creatureUniqueId);
+
+    if (index > -1) { // Creature is already selected, deselect it
+        selectedForMating.splice(index, 1);
+    } else { // Creature is not selected, try to select it
+        if (selectedForMating.length === 0) { // No creature selected yet, this is the first selection
+            selectedForMating.push(creatureUniqueId);
+        } else if (selectedForMating.length === 1) { // One creature already selected, this is the second
+            const firstSelectedCreature = storedCreatures.find(c => c && c.uniqueId === selectedForMating[0]);
+            if (firstSelectedCreature && firstSelectedCreature.currentEvolutionStage !== 0) {
+                alert("First selected creature must be a BASE (Stage 0) creature for mating.");
+                selectedForMating.length = 0; // Clear selection
+                // Optionally, select the newly clicked creature if it's stage 0, or just clear
+                // For now, just clearing to make the user re-select a valid first.
+            } else if (creature.currentEvolutionStage !== 0) {
+                alert("Second selected creature must also be a BASE (Stage 0) creature for mating.");
+                // Do not add the second creature, first one remains selected.
+            } else {
+                selectedForMating.push(creatureUniqueId); // Both are valid for mating
+            }
+        } else { // selectedForMating.length === 2, replace the first one (FIFO for selection of 2)
+            const firstSelectedCreature = storedCreatures.find(c => c && c.uniqueId === selectedForMating[0]);
+             //This case implies we are clicking a third creature. We need to check the NEWLY clicked one.
+            if (creature.currentEvolutionStage !== 0) {
+                alert("New creature selected must be BASE (Stage 0) for mating. Selection cleared.");
+                selectedForMating.length = 0;
+            } else {
+                 // If the newly clicked one is stage 0, the "oldest" of the two previously selected is replaced.
+                 // However, the logic should be: if 2 are selected and a 3rd (valid) is clicked,
+                 // it should probably clear and start a new pair with the clicked one, or replace the second.
+                 // Current behavior (FIFO replacement of 2) could be confusing.
+                 // For simplicity now: if 2 are selected, clicking a 3rd valid one will replace the first selected.
+                 // This means the "newly clicked" one (creature) and the "second of the original pair" become the new pair.
+                 // This part of the logic might need further refinement based on desired UX.
+                 // Let's re-evaluate: if 2 are selected, a 3rd click should probably reset or be disallowed unless deselecting first.
+                 // For now, let's simplify: if 2 are selected, any new click on a *different* creature either deselects one or alerts.
+                 // Sticking to FIFO for 2 for now if the new one is valid:
                 selectedForMating.shift();
                 selectedForMating.push(creatureUniqueId);
             }
@@ -213,28 +237,43 @@ export function toggleMatingSelection(creatureUniqueId) {
         const creatureInSlot = storedCreatures.find(c => c && c.uniqueId === itemUniqueId);
 
         if (actionsDiv && creatureInSlot) {
-            // Show actions only if ONE creature is selected AND it's THIS one
-            // AND this creature itself is NOT selected for mating (i.e., it's the one whose actions we might want to show)
-            if (selectedForMating.length === 1 && selectedForMating[0] === itemUniqueId && creatureInSlot.currentEvolutionStage !== 0) {
-                 actionsDiv.style.display = 'flex'; // Show for single, non-mating-candidate selection
-            } else if (selectedForMating.length === 1 && selectedForMating[0] === itemUniqueId && creatureInSlot.currentEvolutionStage === 0) {
-                // If it's a stage 0 creature and it's the only one selected, it could be for activation OR for starting a mating pair
-                // So, still show its actions. The mating button itself will gate the mating action.
+            // Show actions if:
+            // 1. This creature is the *only* one selected (regardless of its stage - for activation/removal)
+            // OR
+            // 2. No creatures are selected for mating (actions should be visible for all non-active creatures)
+            // OR
+            // 3. This creature is *not* part of the current mating selection (if 2 are selected for mating)
+            // Hide actions if:
+            // 1. This creature *is* one of two selected for mating.
+            const isThisCreatureSelectedForMating = selectedForMating.includes(itemUniqueId);
+
+            if (selectedForMating.length === 0) { // No creatures selected for mating, show actions for all
                 actionsDiv.style.display = 'flex';
-            }
-            else {
+            } else if (selectedForMating.length === 1 && isThisCreatureSelectedForMating) { // This is the only one selected
+                actionsDiv.style.display = 'flex';
+            } else if (selectedForMating.length === 1 && !isThisCreatureSelectedForMating) { // One other is selected, hide for this one
                 actionsDiv.style.display = 'none';
+            } else if (selectedForMating.length === 2) { // Two creatures selected for mating
+                actionsDiv.style.display = isThisCreatureSelectedForMating ? 'none' : 'flex'; // Hide if it's one of the pair, show otherwise
+            } else {
+                 actionsDiv.style.display = 'none'; // Default hide
             }
+
+
         }
 
-        // Update 'selected' class for mating candidates
+        // Update 'selected' class for mating candidates (only if stage 0)
         if (selectedForMating.includes(itemUniqueId) && creatureInSlot && creatureInSlot.currentEvolutionStage === 0) {
             itemLi.classList.add('selected');
         } else {
             itemLi.classList.remove('selected');
         }
+         // If a creature is selected but it's not stage 0, it shouldn't have the 'selected' class for mating
+        if (selectedForMating.includes(itemUniqueId) && creatureInSlot && creatureInSlot.currentEvolutionStage !== 0) {
+            itemLi.classList.remove('selected');
+        }
     });
-    updateButtonState(); // Update global buttons like "Mate Selected"
+    updateButtonState();
 }
 
 
