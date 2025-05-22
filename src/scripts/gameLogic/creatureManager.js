@@ -1,12 +1,12 @@
 // creatureManager.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as cfg from './config.js';
-import * as dom from './domElements.js';
-import { scene, createPlaceholderModel, disposeGltf } from './threeSetup.js';
+import * as cfg from '../config.js';
+import * as dom from '../ui/domElements.js';
+import { scene, createPlaceholderModel, disposeGltf } from '../rendering/threeSetup.js';
 import { ALL_MODEL_DEFINITIONS, ENVIRONMENTS_DATA, INTRA_ENV_HYBRID_RULES, INTER_ENV_HYBRID_RULES } from './initializers.js';
-import { getModelURL } from './fileLoader.js';
-import { updateActiveCreatureDisplay, updateStoredCreaturesDisplay, updateButtonState, resetIncubationTimerDisplay } from './uiManager.js';
+import { getModelURL } from '../utils/fileLoader.js';
+import { updateActiveCreatureDisplay, updateStoredCreaturesDisplay, updateButtonState, resetIncubationTimerDisplay } from '../ui/uiManager.js';
 import { deserializeCreatureFromLoad } from './saveLoad.js'; // For consistency in deserialization
 
 

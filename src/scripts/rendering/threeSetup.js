@@ -1,8 +1,8 @@
 // threeSetup.js
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as dom from './domElements.js';
-import { ENVIRONMENTS_DATA } from './initializers.js'; // For initial ambiance
+import * as dom from '../ui/domElements.js';
+import { ENVIRONMENTS_DATA } from '../gameLogic/initializers.js'; // For initial ambiance
 
 export let scene, camera, renderer, controls, ground;
 export let placeholderGeo, placeholderMat;

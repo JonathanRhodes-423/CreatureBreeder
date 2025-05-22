@@ -1,15 +1,15 @@
 // script.js (Main Orchestrator)
 import * as THREE from 'three';
-import * as dom from './domElements.js';
+import * as dom from './ui/domElements.js';
 import * as cfg from './config.js';
 
-import { parseModelList, fetchAndParseEnvironments, setupHybridRules, ALL_MODEL_DEFINITIONS, ENVIRONMENTS_DATA } from './initializers.js';
-import { initializeScene, animate, updateAmbiance, onWindowResize as onThreeWindowResize } from './threeSetup.js';
-import { setupAllEventListeners, onEnvironmentChange } from './eventListeners.js';
-import * as ui from './uiManager.js';
-import * as cm from './creatureManager.js';
-import * as sl from './saveLoad.js'; // Save/Load module (API version)
-import { processAndLoadFiles, loadedModelData, previewSelectedFiles } from './fileLoader.js'; // Added previewSelectedFiles
+import { parseModelList, fetchAndParseEnvironments, setupHybridRules, ALL_MODEL_DEFINITIONS, ENVIRONMENTS_DATA } from './gameLogic/initializers.js';
+import { initializeScene, animate, updateAmbiance, onWindowResize as onThreeWindowResize } from './rendering/threeSetup.js';
+import { setupAllEventListeners, onEnvironmentChange } from './ui/eventListeners.js';
+import * as ui from './ui/uiManager.js';
+import * as cm from './gameLogic/creatureManager.js';
+import * as sl from './gameLogic/saveLoad.js'; // Save/Load module (API version)
+import { processAndLoadFiles, loadedModelData, previewSelectedFiles } from './utils/fileLoader.js'; // Added previewSelectedFiles
 
 
 // --- Global State ---

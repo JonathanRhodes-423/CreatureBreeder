@@ -1,16 +1,16 @@
 // eventListeners.js
 // eventListeners.js
 import * as dom from './domElements.js';
-import { updateAmbiance, onWindowResize } from './threeSetup.js';
-import { ENVIRONMENTS_DATA } from './initializers.js';
-import { previewSelectedFiles, processAndLoadFiles } from './fileLoader.js';
-import { startNewEggIncubation, setupMating } from './creatureManager.js';
+import { updateAmbiance, onWindowResize } from '../rendering/threeSetup.js';
+import { ENVIRONMENTS_DATA } from '../gameLogic/initializers.js';
+import { previewSelectedFiles, processAndLoadFiles } from '../utils/fileLoader.js';
+import { startNewEggIncubation, setupMating } from '../gameLogic/creatureManager.js';
 // Import main game interaction handlers from script.js
 import {
     handleNewGameClick, handleLoadGameClick,
     handleStartGameFinal, handleCancelNewGame,
     handleCancelLoadGame, handleBackToMenuAndSave
-} from './script.js';
+} from '../app.js';
 
 export function setupEventListeners() {
     if(dom.hamburgerMenuButton) dom.hamburgerMenuButton.addEventListener('click', () => {

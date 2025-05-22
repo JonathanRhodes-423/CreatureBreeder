@@ -1,7 +1,7 @@
 // fileLoader.js
-import * as dom from './domElements.js';
-import { ALL_MODEL_DEFINITIONS } from './initializers.js'; // Needs populated ALL_MODEL_DEFINITIONS
-import { updateModelStatusHeader, updateButtonState } from './uiManager.js';
+import * as dom from '../ui/domElements.js';
+import { ALL_MODEL_DEFINITIONS } from '../gameLogic/initializers.js'; // Needs populated ALL_MODEL_DEFINITIONS
+import { updateModelStatusHeader, updateButtonState } from '../ui/uiManager.js';
 
 export let loadedModelData = {}; // Stores { modelKey: { fileURL, file } }
 

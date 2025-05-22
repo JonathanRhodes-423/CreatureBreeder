@@ -1,9 +1,9 @@
 // uiManager.js
 import * as THREE from 'three'; // If directly used, e.g. for instanceof THREE.Color
 import * as dom from './domElements.js';
-import * as cfg from './config.js';
-import { ENVIRONMENTS_DATA, ALL_MODEL_DEFINITIONS } from './initializers.js';
-import { loadedModelData } from './fileLoader.js';
+import * as cfg from '../config.js';
+import { ENVIRONMENTS_DATA, ALL_MODEL_DEFINITIONS } from '../gameLogic/initializers.js';
+import { loadedModelData } from '../utils/fileLoader.js';
 import {
     activeCreatureInstance, storedCreatures, selectedForMating, isIncubating, isHybridIncubationSetup, egg,
     timeLeftForIncubation, parent1ForMating, parent2ForMating,
@@ -11,7 +11,7 @@ import {
     attemptLevelUpCreature, attemptNaturalEvolution,
     updateCreatureCanEvolveStatus, formatTimeGlobal,
     attemptStoreActiveCreature, discardActiveCreature
-} from './creatureManager.js';
+} from '../gameLogic/creatureManager.js';
 // Import game interaction functions from script.js or a new gameController.js if they are moved
 // For now, assume they might be passed or called if uiManager directly triggers game loads.
 // import { handleLoadSelectedGame } from './script.js'; // Example if it's in script.js

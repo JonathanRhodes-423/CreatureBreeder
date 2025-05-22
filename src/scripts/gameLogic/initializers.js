@@ -1,7 +1,7 @@
 // initializers.js
 import * as THREE from 'three'; // For Color objects in ambiance
-import * as cfg from './config.js';
-import * as dom from './domElements.js';
+import * as cfg from '../config.js';
+import * as dom from '../ui/domElements.js';
 
 // These will be populated and then exported for other modules to use
 export let ALL_MODEL_DEFINITIONS = [];
