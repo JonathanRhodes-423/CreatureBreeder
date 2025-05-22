@@ -993,14 +993,27 @@ Description: Surprisingly lush slopes...`;
         
         function updateCreatureCanEvolveStatus(creatureData) {
             if (!creatureData) return;
+        
             if (creatureData.isPurebred) {
-                if (creatureData.currentEvolutionStage === 0) creatureData.canEvolve = true; 
-                else if (creatureData.currentEvolutionStage === 1) creatureData.canEvolve = creatureData.level < MAX_LEVEL; 
-                else creatureData.canEvolve = false; 
+                if (creatureData.currentEvolutionStage === 0) {
+                    // For natural evolution (Stage 0 -> 1), readiness depends on the timer.
+                    creatureData.canEvolve = (creatureData.timeToNextEvolution <= 0);
+                } else if (creatureData.currentEvolutionStage === 1) {
+                    // For level-up evolution (Stage 1 -> 2), readiness depends on level.
+                    creatureData.canEvolve = (creatureData.level >= MAX_LEVEL);
+                } else { // Max evolution (Stage 2)
+                    creatureData.canEvolve = false;
+                }
             } else if (creatureData.isHybrid) {
-                if (creatureData.currentEvolutionStage === 0) creatureData.canEvolve = creatureData.level < MAX_LEVEL; 
-                else creatureData.canEvolve = false; 
-            } else creatureData.canEvolve = false; 
+                if (creatureData.currentEvolutionStage === 0) {
+                    // For hybrid level-up (Stage 0 -> 1 for sheen), readiness depends on level.
+                    creatureData.canEvolve = (creatureData.level >= MAX_LEVEL);
+                } else { // Max evolution for hybrid (Stage 1 with sheen)
+                    creatureData.canEvolve = false;
+                }
+            } else {
+                creatureData.canEvolve = false;
+            }
         }
 
 
@@ -1038,29 +1051,53 @@ Description: Surprisingly lush slopes...`;
             });
         }
         
-        function updateGameTimers() { 
-            let needsDisplayUpdate = false;
+        function updateGameTimers() {
+            let anyTimerReachedZeroThisTick = false;
+        
+            // Update stored creatures
             storedCreatures.forEach(creature => {
                 if (creature && creature.isPurebred && creature.currentEvolutionStage === 0 && creature.timeToNextEvolution > 0) {
                     creature.timeToNextEvolution--;
-                     if (creature.timeToNextEvolution === 0) needsDisplayUpdate = true;
+                    if (creature.timeToNextEvolution === 0) {
+                        anyTimerReachedZeroThisTick = true;
+                    }
                 }
-                if(creature) updateCreatureCanEvolveStatus(creature); 
+                if (creature) {
+                    updateCreatureCanEvolveStatus(creature); // Update display-related canEvolve flag
+                }
             });
-
-            if(activeCreatureInstance && activeCreatureInstance.userData){
+        
+            // Update active creature if it exists
+            if (activeCreatureInstance && activeCreatureInstance.userData) {
                 const activeData = activeCreatureInstance.userData;
-                const storedVersionIndex = storedCreatures.findIndex(c => c.uniqueId === activeData.uniqueId);
-                if(storedVersionIndex > -1){
-                    storedCreatures[storedVersionIndex] = {...activeData}; 
+        
+                // Decrement timer for the active creature itself
+                if (activeData.isPurebred && activeData.currentEvolutionStage === 0 && activeData.timeToNextEvolution > 0) {
+                    activeData.timeToNextEvolution--;
+                    if (activeData.timeToNextEvolution === 0) {
+                        anyTimerReachedZeroThisTick = true;
+                    }
                 }
-                 updateCreatureCanEvolveStatus(activeData); 
-                 if (needsDisplayUpdate) updateActiveCreatureDisplay(); 
+        
+                // Sync active creature data back to storage if it exists there
+                const storedVersionIndex = storedCreatures.findIndex(c => c.uniqueId === activeData.uniqueId);
+                if (storedVersionIndex > -1) {
+                    storedCreatures[storedVersionIndex] = { ...activeData };
+                }
+                
+                updateCreatureCanEvolveStatus(activeData); // Update display-related canEvolve flag for active creature
             }
-
-            if (needsDisplayUpdate) {
-                updateStoredCreaturesDisplay(); 
-                updateButtonState(); 
+        
+            // If any creature's timer reached zero this tick, update relevant UI parts
+            if (anyTimerReachedZeroThisTick) {
+                updateStoredCreaturesDisplay();
+                updateActiveCreatureDisplay();
+            }
+        
+            // Always call updateButtonState if an active creature exists or if a timer just hit zero.
+            // This ensures button states are current.
+            if (activeCreatureInstance || anyTimerReachedZeroThisTick) {
+                updateButtonState();
             }
         }
 
@@ -1415,10 +1452,16 @@ Description: Surprisingly lush slopes...`;
             }
 
             const dynamicEvolveCreatureButton = document.getElementById('dynamicEvolveCreatureButton');
-            if (dynamicEvolveCreatureButton) { // Check if the button exists in the DOM
+            if (dynamicEvolveCreatureButton) {
                 let canEvolve = false;
-                if (!isIncubating || activeCreatureData || (activeCreatureData.isPurebred && !activeCreatureData.currentEvolutionStage === 0 && !activeCreatureData.timeToNextEvolution <= 0)){
-                    canEvolve = activeCreatureData.isPurebred && activeCreatureData.currentEvolutionStage === 0 && activeCreatureData.timeToNextEvolution <= 0;
+                // Ensure there is an active creature and no egg is currently incubating
+                if (activeCreatureData && !isIncubating) {
+                    // Check if the active creature meets all conditions for natural evolution
+                    if (activeCreatureData.isPurebred &&
+                        activeCreatureData.currentEvolutionStage === 0 &&
+                        activeCreatureData.timeToNextEvolution <= 0) {
+                        canEvolve = true;
+                    }
                 }
                 dynamicEvolveCreatureButton.disabled = !canEvolve;
             }
