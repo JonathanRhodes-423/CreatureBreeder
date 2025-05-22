@@ -22,7 +22,6 @@ import * as THREE from 'three';
         const environmentSelect = document.getElementById('environmentSelect');
         const startIncubationButton = document.getElementById('startIncubationButton');
         const timerDisplay = document.getElementById('timer');
-        const evolveCreatureButton = document.getElementById('evolveCreatureButton');
         const storeActiveCreatureButton = document.getElementById('storeActiveCreatureButton');
         const mateButton = document.getElementById('mateButton');
         const storedCreaturesList = document.getElementById('storedCreaturesList');
@@ -34,9 +33,8 @@ import * as THREE from 'three';
         const modelStatusHeader = document.getElementById('model-status-header');
         const uploadProgressBar = document.getElementById('upload-progress-bar');
         const fileListPreview = document.getElementById('file-list-preview');
-        const processUploadedFilesButton = document.getElementById('process-uploaded-files');
-        const levelUpButton = document.getElementById('levelUpButton'); 
-        const activeCreatureLevelDisplay = document.getElementById('activeCreatureLevelDisplay'); 
+        const processUploadedFilesButton = document.getElementById('process-uploaded-files'); 
+        //const activeCreatureLevelDisplay = document.getElementById('activeCreatureLevelDisplay'); 
         const activeCreatureDetailsPanel = document.getElementById('activeCreatureDetails');
 
         let scene, camera, renderer, controls, ground;
@@ -137,11 +135,7 @@ import * as THREE from 'three';
             closeUploadModalButton.addEventListener('click', () => { uploadModal.style.display = 'none'; });
             modelFileInput.addEventListener('change', previewSelectedFiles);
             processUploadedFilesButton.addEventListener('click', processAndLoadFiles);
-            
-            startIncubationButton.addEventListener('click', startNewEggIncubation); 
-            
-            evolveCreatureButton.addEventListener('click', attemptNaturalEvolution); 
-            levelUpButton.addEventListener('click', attemptLevelUpCreature); 
+            startIncubationButton.addEventListener('click', startNewEggIncubation);  
             storeActiveCreatureButton.addEventListener('click', attemptStoreActiveCreature);
             mateButton.addEventListener('click', setupMating);
             window.addEventListener('resize', onWindowResize);
@@ -712,7 +706,7 @@ Description: Surprisingly lush slopes...`;
         function spawnEgg(isHybrid, forIncubation = true) {
             if (activeCreatureInstance) { scene.remove(activeCreatureInstance); disposeGltf(activeCreatureInstance); activeCreatureInstance = null; }
             if (egg) { scene.remove(egg); disposeGltf(egg); egg = null; }
-            if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = "Level: N/A"; 
+            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = "Level: N/A"; 
             updateActiveCreatureDisplay(); 
 
             const eggColor = isHybrid ? 0xDA70D6 : 0xffffff; 
@@ -925,7 +919,7 @@ Description: Surprisingly lush slopes...`;
             if (activeCreatureInstance) { scene.remove(activeCreatureInstance); disposeGltf(activeCreatureInstance); activeCreatureInstance = null; } // Clear previous
             
             const modelURL = getModelURL(creatureInstanceData.modelKey);
-            if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureInstanceData.level}`; 
+            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureInstanceData.level}`; 
 
             const currentCreatureDataCopy = createCreatureObject({...creatureInstanceData}); // Work with a fresh copy
 
@@ -1117,7 +1111,7 @@ Description: Surprisingly lush slopes...`;
             }
 
             creatureData.level++;
-            if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureData.level}`;
+            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureData.level}`;
 
             if (creatureData.level >= MAX_LEVEL && canTriggerEvolutionByLevel(creatureData)) {
                 triggerEvolutionByLevel(creatureData);
@@ -1164,7 +1158,7 @@ Description: Surprisingly lush slopes...`;
                 creatureData.evolvedInEnvironmentKey = evolutionEnvKey;
                 creatureData.level = 0; 
             }
-            if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureData.level}`;
+            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = `Level: ${creatureData.level}`;
             updateCreatureCanEvolveStatus(creatureData); 
             
             const storedIndex = storedCreatures.findIndex(c => c.uniqueId === creatureData.uniqueId);
@@ -1205,7 +1199,7 @@ Description: Surprisingly lush slopes...`;
             scene.remove(activeCreatureInstance);
             disposeGltf(activeCreatureInstance);
             activeCreatureInstance = null;
-            if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = "Level: N/A"; 
+            //if(activeCreatureLevelDisplay) activeCreatureLevelDisplay.textContent = "Level: N/A"; 
             
             updateActiveCreatureDisplay(); 
             updateStoredCreaturesDisplay();
@@ -1275,7 +1269,7 @@ Description: Surprisingly lush slopes...`;
                     else evolutionInfo = "Max Evolution (Purebred EV2)";
                 } else if (creature.isHybrid) {
                     if (creature.currentEvolutionStage === 0) evolutionInfo = creature.level < MAX_LEVEL ? `Train to Lvl ${MAX_LEVEL} for Sheen` : "Ready for Sheen (Lvl Up)";
-                    else evolutionInfo = "Max Evolution (Hybrid Sheen)";
+                    else evolutionInfo = "Max Evolution (Hybrid)";
                 }
 
                 const originEnvObj = ENVIRONMENTS_DATA.find(env => env.key === creature.originEnvironmentKey);
@@ -1292,6 +1286,27 @@ Description: Surprisingly lush slopes...`;
                     <div class="info">Origin: ${originDisplayName}</div>
                     ${creature.hasSilverSheen ? '<div class="info" style="color: #C0C0C0;">Silver Sheen Active</div>' : ''}
                     <div class="info">Evolution: ${evolutionInfo}</div>`;
+
+                    const levelUpButtonInstance = document.createElement('button');
+                    levelUpButtonInstance.id = 'dynamicLevelUpButton'; // Use a consistent ID
+                    levelUpButtonInstance.textContent = 'Level Up';
+                    levelUpButtonInstance.style.marginTop = '10px';
+                    levelUpButtonInstance.style.width = '45%'; // Ensure it spans width like others
+                    levelUpButtonInstance.classList.add('modal-button'); // Optional: use existing button class for styling
+
+                    levelUpButtonInstance.addEventListener('click', attemptLevelUpCreature);
+                    activeCreatureDetailsPanel.appendChild(levelUpButtonInstance);
+
+                    const evolveCreatureButtonInstance = document.createElement('button');
+                    evolveCreatureButtonInstance.id = 'dynamicEvolveCreatureButton'; // Use a consistent ID
+                    evolveCreatureButtonInstance.textContent = 'Evolve';
+                    evolveCreatureButtonInstance.style.marginTop = '10px';
+                    evolveCreatureButtonInstance.style.marginLeft = '2px';
+                    evolveCreatureButtonInstance.style.width = '45%'; // Ensure it spans width like others
+                    evolveCreatureButtonInstance.classList.add('modal-button'); // Optional: use existing button class for styling  
+
+                    evolveCreatureButtonInstance.addEventListener('click', attemptNaturalEvolution);
+                    activeCreatureDetailsPanel.appendChild(evolveCreatureButtonInstance);
             } else {
                 activeCreatureDetailsPanel.innerHTML = '<p>No creature active.</p>';
             }
@@ -1376,7 +1391,7 @@ Description: Surprisingly lush slopes...`;
 
         function updateButtonState() {
             // Ensure DOM elements exist before trying to update them
-            if (!startIncubationButton || !evolveCreatureButton || !levelUpButton || !storeActiveCreatureButton || !mateButton || !hybridEggMessage || !activeCreatureLevelDisplay) {
+            if (!startIncubationButton || !storeActiveCreatureButton || !mateButton || !hybridEggMessage) {
                 console.warn("One or more button/display DOM elements not found in updateButtonState.");
                 return;
             }
@@ -1389,16 +1404,24 @@ Description: Surprisingly lush slopes...`;
             else if (isHybridIncubationSetup && egg) startIncubationButton.textContent = "Incubate Mated Egg";
             else startIncubationButton.textContent = "Start Incubation (New Egg)";
 
-
-            evolveCreatureButton.disabled = isIncubating || !activeCreatureData || !(activeCreatureData.isPurebred && activeCreatureData.currentEvolutionStage === 0 && activeCreatureData.timeToNextEvolution <= 0);
-
-            let canLevelUp = false;
-            if (activeCreatureData && !isIncubating) {
-                if (activeCreatureData.isPurebred) canLevelUp = (activeCreatureData.currentEvolutionStage === 0 || activeCreatureData.currentEvolutionStage === 1) && activeCreatureData.level < MAX_LEVEL && activeCreatureData.currentEvolutionStage < 2;
-                else if (activeCreatureData.isHybrid) canLevelUp = activeCreatureData.currentEvolutionStage === 0 && activeCreatureData.level < MAX_LEVEL;
+            const dynamicLevelUpButton = document.getElementById('dynamicLevelUpButton');
+            if (dynamicLevelUpButton) { // Check if the button exists in the DOM
+                let canLevelUp = false;
+                if (activeCreatureData && !isIncubating) {
+                    if (activeCreatureData.isPurebred) canLevelUp = (activeCreatureData.currentEvolutionStage === 0 || activeCreatureData.currentEvolutionStage === 1) && activeCreatureData.level < MAX_LEVEL && activeCreatureData.currentEvolutionStage < 2;
+                    else if (activeCreatureData.isHybrid) canLevelUp = activeCreatureData.currentEvolutionStage === 0 && activeCreatureData.level < MAX_LEVEL;
+                }
+                dynamicLevelUpButton.disabled = !canLevelUp;
             }
-            levelUpButton.disabled = !canLevelUp;
-            storeActiveCreatureButton.disabled = isIncubating || !activeCreatureData;
+
+            const dynamicEvolveCreatureButton = document.getElementById('dynamicEvolveCreatureButton');
+            if (dynamicEvolveCreatureButton) { // Check if the button exists in the DOM
+                let canEvolve = false;
+                if (!isIncubating || activeCreatureData || (activeCreatureData.isPurebred && !activeCreatureData.currentEvolutionStage === 0 && !activeCreatureData.timeToNextEvolution <= 0)){
+                    canEvolve = activeCreatureData.isPurebred && activeCreatureData.currentEvolutionStage === 0 && activeCreatureData.timeToNextEvolution <= 0;
+                }
+                dynamicEvolveCreatureButton.disabled = !canEvolve;
+            }
 
             let canMateNow = selectedForMating.length === 2 && !isIncubating && !(isHybridIncubationSetup && egg) && !activeCreatureInstance;
             if (canMateNow) {
@@ -1412,7 +1435,7 @@ Description: Surprisingly lush slopes...`;
             if (isHybridIncubationSetup && egg && !isIncubating && parent1ForMating?.modelKey === parent2ForMating?.modelKey) hybridEggMessage.textContent = "Purebred Pair Egg Ready!"; 
             else if (isHybridIncubationSetup && egg && !isIncubating) hybridEggMessage.textContent = "Hybrid Egg Ready!";
             
-            activeCreatureLevelDisplay.textContent = activeCreatureData ? `Level: ${activeCreatureData.level}` : "Level: N/A";
+            // activeCreatureLevelDisplay.textContent = activeCreatureData ? `Level: ${activeCreatureData.level}` : "Level: N/A";
             if(isIncubating && typeof updateStoredCreaturesDisplay === 'function') updateStoredCreaturesDisplay(); // Refresh storage item button states
         }
         
